@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         一键导出QQ群成员信息
+// @name         QQ群管理者
 // @namespace    http://www.bmqy.net/
 // @version      1.0.0
-// @description  进入QQ群官网，可一键导出群成员信息
+// @description  QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 // @author       bmqy
 // @icon         https://raw.githubusercontent.com/bmqy/one-click-export-of-qq-group/master/images/icon_128x128.png
 // @require      https://cdn.bootcss.com/jquery/2.2.1/jquery.min.js

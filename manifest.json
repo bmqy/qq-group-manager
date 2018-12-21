@@ -13,7 +13,7 @@
    "manifest_version": 2,
    "name": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005",
    "short_name": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005",
-   "description": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005\uff0c\u4e00\u952e\u5bfc\u51fa\u0051\u0051\u7fa4\u6210\u5458\u4fe1\u606f",
+   "description": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005\uff0c\u4e00\u952e\u5bfc\u51fa\u0051\u0051\u7fa4\u6210\u5458\u4fe1\u606f\uff0c\u9700\u8981\u5148\u8fdb\u5165\u0051\u0051\u7fa4\u5b98\u7f51\uff01",
    "author": "bmqy",
    "update_url": "https://clients2.google.com/service/update2/crx",
    "permissions": ["tabs", "https://qun.qq.com/*"],
