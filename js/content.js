@@ -455,8 +455,7 @@
         },
     };
 
-    $(document).ready(function () {
-            
+    $(document).ready(function () {            
         QQGroup.init();
     });
 })();
