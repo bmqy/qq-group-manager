@@ -5,7 +5,7 @@
    },
    "content_scripts": [ {
       "js": ["js/jquery.2.1.4.min.js", "js/js.cookie.min.js", "js/content.js"],
-      "matches": [ "http://*/*", "https://*/*" ]
+      "matches": ["https://qun.qq.com/*"]
    } ],
    "icons": {
       "128": "images/icon_128x128.png"
