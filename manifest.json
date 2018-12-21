@@ -1,0 +1,21 @@
+{
+   "browser_action": {
+      "default_icon": "images/icon_128x128.png",
+      "default_title": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005"
+   },
+   "content_scripts": [ {
+      "js": ["js/jquery.2.1.4.min.js", "js/js.cookie.min.js", "js/content.js"],
+      "matches": [ "http://*/*", "https://*/*" ]
+   } ],
+   "icons": {
+      "128": "images/icon_128x128.png"
+   },
+   "manifest_version": 2,
+   "name": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005",
+   "short_name": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005",
+   "description": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005\uff0c\u4e00\u952e\u5bfc\u51fa\u0051\u0051\u7fa4\u6210\u5458\u4fe1\u606f",
+   "author": "bmqy",
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "permissions": ["tabs", "https://qun.qq.com/*"],
+   "version": "1.0.0"
+}
