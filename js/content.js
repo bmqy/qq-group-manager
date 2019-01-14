@@ -301,16 +301,36 @@
             return sHtml;
         },
 
+        getIncludFieldCount: () => {
+            let i = 0;
+            for (let key in QQGroup.options.fields) {
+                if (QQGroup.options.fields[key].switch) {
+                    i++;
+                }
+            }
+            return i;
+        },
+
         exportGroupMemberListToPlaintext: (memberList) => {
             let oShowResult = $('#showResult');
             let sResult = '';
-            for (let i = 0; i < memberList.length; i++) {
+            let len = memberList.length;
+            let k = QQGroup.getIncludFieldCount();
+            for (let i = 0; i < len; i++) {
                 for (let key in QQGroup.options.fields) {
+                    let j = 1;
                     if (QQGroup.options.fields[key].switch) {
-                        sResult += memberList[i][key] + '\t';
+                        j++;
+                        if (j < k) {
+                            sResult += memberList[i][key] + '\t';
+                        } else {
+                            sResult += memberList[i][key];
+                        }
                     }
                 }
-                sResult += '\r\n';
+                if (i < len - 1) {
+                    sResult += '\r\n';
+                }
             }
 
             GM_setClipboard(sResult, {
