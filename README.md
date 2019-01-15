@@ -8,7 +8,7 @@ QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 
 ### 更新日志
 2019.01.14：
-1、优化纯文本导出结果，最好一项不带制表符
+1、优化纯文本导出结果，最后一项不带制表符
 
 ### 效果截图
 ![扩展运行效果图](https://raw.githubusercontent.com/bmqy/qq-group-manager/master/images/20181221125740.png)
