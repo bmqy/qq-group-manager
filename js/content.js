@@ -181,39 +181,51 @@
                 error: (err) => console.log('BmqyQQGroup: error!')
             });
         },
-
-        queryGroupMemberList: () => {
-            let api = QQGroup.api.queryGrouopMemberList;
+        
+        queryGroupMemberList: async () => {
+            let api = QQGroup.api.queryGrouopInfo;
             let gc = $('#groupList').val();
             let oBtnStart = $('#btnStartBmqyQQGroupExport');
             oBtnStart.attr('disabled', 'disabled').text('加载中...');
+            let arr = [];
+            let s = 20;
+            let b = 0;
+            let e = s;
 
-            $.ajax({
-                url: api,
-                type: 'post',
-                data: {
-                    gc: gc,
-                    st: 0,
-                    end: QQGroup.groupInfo.totalCount,
-                    sort: 0,
-                    bkn: QQGroup.postData.bkn
-                },
-                success: (res) => {
-                    let data = JSON.parse(res);
-                    if (data.ec === 0) {
-                        QQGroup.groupInfo.members = data.mems;
-                        QQGroup.exportGroupMemberList();
+            for (let i = 0; i < Math.round(QQGroup.groupInfo.totalCount / s); i++) {
+                b = i * s + i;
+                e = i * s + s + i;
+                await $.ajax({
+                    url: api,
+                    type: 'post',
+                    data: {
+                        gc: gc,
+                        st: b,
+                        end: e, //QQGroup.groupInfo.totalCount,
+                        sort: 0,
+                        bkn: QQGroup.postData.bkn
+                    },
+                    dataType: 'json',
+                    success: (res) => {
+                        if (res.ec == 0) {
+                            arr.push.apply(arr, res.mems);
+                        }
+                    },
+                    error: (err) => {
+                        console.log(err, 'BmqyQQGroup: error!');
                         oBtnStart.removeAttr('disabled').text('开始');
-                    } else {
-                        oBtnStart.text('未登录');
-                        console.log('BmqyQQGroup: 请重新登录！');
                     }
-                },
-                error: (err) => {
-                    console.log('BmqyQQGroup: error!');
-                    oBtnStart.removeAttr('disabled').text('开始');
-                }
-            });
+                });
+            }
+
+            if (arr.length > 0) {
+                QQGroup.groupInfo.members = arr;
+                QQGroup.exportGroupMemberList();
+                oBtnStart.removeAttr('disabled').text('开始');
+            } else {
+                oBtnStart.text('未登录');
+                console.log('BmqyQQGroup: 请重新登录！');
+            }
         },
 
         exportGroupMemberList: () => {

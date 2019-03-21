@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         QQ群管理者
 // @namespace    http://www.bmqy.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 // @author       bmqy
 // @icon         https://raw.githubusercontent.com/bmqy/one-click-export-of-qq-group/master/images/icon_128x128.png
@@ -90,6 +90,46 @@
                     switch: false
                 }
             },
+            /*fields: {
+                'uin': {
+                    name: 'QQ号',
+                    switch: true,
+                    disabled: true
+                },
+                'role': {
+                    name: '群职务',
+                    switch: false
+                },
+                'nk': {
+                    name: '昵称',
+                    switch: false
+                },
+                'cd': {
+                    name: '群名片',
+                    switch: false
+                },
+                'g': {
+                    name: '性别',
+                    switch: false
+                },
+                'qage': {
+                    name: 'Q龄',
+                    switch: false
+                },
+                'jt': {
+                    name: '入群时间',
+                    switch: false
+                },
+                'lp': {
+                    name: '群积分',
+                    switch: false,
+                    disabled: true
+                },
+                'lst': {
+                    name: '最后发言',
+                    switch: false
+                }
+            },*/
             exportMode: {
                 0: '纯文本',
                 1: '电子表格'
@@ -100,9 +140,10 @@
 
         api: {
             ueryGroupList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
-            queryGrouopMemberList: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
-            queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
-            queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
+            queryGrouopInfo: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
+            queryGrouopMemberList: 'https://apinew.bmqy.net/api/qq/',
+            //queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
+            //queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
             //queryFriendList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_friend_list'
         },
 
@@ -158,7 +199,7 @@
         },
 
         queryGroupInfo: () => {
-            let api = QQGroup.api.queryGrouopMemberList;
+            let api = QQGroup.api.queryGrouopInfo;
             let gc = ($('#groupList').val()) ? $('#groupList').val() : '';
             let gn = ($('#groupList option:selected').text()) ? $('#groupList option:selected').text() : '';
             let owner = ($('#groupList option:selected').attr('data-owner')) ? $('#groupList option:selected').attr('data-owner') : '';
@@ -199,38 +240,50 @@
             });
         },
 
-        queryGroupMemberList: () => {
-            let api = QQGroup.api.queryGrouopMemberList;
+        queryGroupMemberList: async () => {
+            let api = QQGroup.api.queryGrouopInfo;
             let gc = $('#groupList').val();
             let oBtnStart = $('#btnStartBmqyQQGroupExport');
             oBtnStart.attr('disabled', 'disabled').text('加载中...');
+            let arr = [];
+            let s = 20;
+            let b = 0;
+            let e = s;
 
-            $.ajax({
-                url: api,
-                type: 'post',
-                data: {
-                    gc: gc,
-                    st: 0,
-                    end: QQGroup.groupInfo.totalCount,
-                    sort: 0,
-                    bkn: QQGroup.postData.bkn
-                },
-                success: (res) => {
-                    let data = JSON.parse(res);
-                    if (data.ec === 0) {
-                        QQGroup.groupInfo.members = data.mems;
-                        QQGroup.exportGroupMemberList();
+            for(let i=0;i<Math.round(QQGroup.groupInfo.totalCount/s);i++){
+                b = i*s+i;
+                e = i*s+s+i;
+                await $.ajax({
+                    url: api,
+                    type: 'post',
+                    data: {
+                        gc: gc,
+                        st: b,
+                        end: e,//QQGroup.groupInfo.totalCount,
+                        sort: 0,
+                        bkn: QQGroup.postData.bkn
+                    },
+                    dataType: 'json',
+                    success: (res) => {
+                        if (res.ec == 0) {
+                            arr.push.apply(arr,res.mems);
+                        }
+                    },
+                    error: (err) => {
+                        console.log(err, 'BmqyQQGroup: error!');
                         oBtnStart.removeAttr('disabled').text('开始');
-                    } else {
-                        oBtnStart.text('未登录');
-                        console.log('BmqyQQGroup: 请重新登录！');
                     }
-                },
-                error: (err) => {
-                    console.log('BmqyQQGroup: error!');
-                    oBtnStart.removeAttr('disabled').text('开始');
-                }
-            });
+                });
+            }
+
+            if(arr.length>0){
+                QQGroup.groupInfo.members = arr;
+                QQGroup.exportGroupMemberList();
+                oBtnStart.removeAttr('disabled').text('开始');
+            } else {
+                oBtnStart.text('未登录');
+                console.log('BmqyQQGroup: 请重新登录！');
+            }
         },
 
         exportGroupMemberList: () => {
