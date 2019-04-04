@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         QQ群管理者
 // @namespace    http://www.bmqy.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 // @author       bmqy
 // @icon         https://raw.githubusercontent.com/bmqy/one-click-export-of-qq-group/master/images/icon_128x128.png
@@ -186,7 +186,7 @@
                     bkn: QQGroup.postData.bkn
                 },
                 success: (res) => {
-                    let data = JSON.parse(res);
+                    let data = res;
                     QQGroup.groupList = data;
                     QQGroup.creatBox();
                     QQGroup.checkLogin();
@@ -217,7 +217,7 @@
                     bkn: QQGroup.postData.bkn
                 },
                 success: (res) => {
-                    let data = JSON.parse(res);
+                    let data = res;
                     if (data.ec === 0) {
                         QQGroup.groupInfo.gc = gc;
                         QQGroup.groupInfo.gn = gn;

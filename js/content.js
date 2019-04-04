@@ -128,7 +128,7 @@
                     bkn: QQGroup.postData.bkn
                 },
                 success: (res) => {
-                    let data = JSON.parse(res);
+                    let data = res;
                     QQGroup.groupList = data;
                     QQGroup.creatBox();
                     QQGroup.checkLogin();
@@ -159,7 +159,7 @@
                     bkn: QQGroup.postData.bkn
                 },
                 success: (res) => {
-                    let data = JSON.parse(res);
+                    let data = res;
                     if (data.ec === 0) {
                         QQGroup.groupInfo.gc = gc;
                         QQGroup.groupInfo.gn = gn;
