@@ -82,10 +82,12 @@
         },
 
         api: {
-            ueryGroupList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
+            queryGroupList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
+            queryGrouopInfo: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
             queryGrouopMemberList: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
-            queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
-            queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
+            //queryGrouopMemberList: 'https://apinew.bmqy.net/api/qq/',
+            //queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
+            //queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
             //queryFriendList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_friend_list'
         },
 
@@ -115,11 +117,11 @@
         },
 
         start: () => {
-            QQGroup.queryGroupMemberList();
+            QQGroup.doQueryGroupMemberList();
         },
 
         queryGroupList: () => {
-            let api = QQGroup.api.ueryGroupList;
+            let api = QQGroup.api.queryGroupList;
 
             $.ajax({
                 url: api,
@@ -141,7 +143,7 @@
         },
 
         queryGroupInfo: () => {
-            let api = QQGroup.api.queryGrouopMemberList;
+            let api = QQGroup.api.queryGrouopInfo;
             let gc = ($('#groupList').val()) ? $('#groupList').val() : '';
             let gn = ($('#groupList option:selected').text()) ? $('#groupList option:selected').text() : '';
             let owner = ($('#groupList option:selected').attr('data-owner')) ? $('#groupList option:selected').attr('data-owner') : '';
@@ -180,52 +182,68 @@
                 },
                 error: (err) => console.log('BmqyQQGroup: error!')
             });
-        },
-        
-        queryGroupMemberList: async () => {
-            let api = QQGroup.api.queryGrouopInfo;
-            let gc = $('#groupList').val();
-            let oBtnStart = $('#btnStartBmqyQQGroupExport');
-            oBtnStart.attr('disabled', 'disabled').text('加载中...');
-            let arr = [];
-            let s = 20;
-            let b = 0;
-            let e = s;
+        },       
 
-            for (let i = 0; i < Math.round(QQGroup.groupInfo.totalCount / s); i++) {
-                b = i * s + i;
-                e = i * s + s + i;
-                await $.ajax({
+        doQueryGroupMemberList: function() {
+            let oBtnStart = $('#btnStartBmqyQQGroupExport');
+            oBtnStart.text('加载中...').attr('disabled', 'disabled');
+            let arr = [];
+            let maxCount = QQGroup.groupInfo.totalCount;
+            let ps = 40;
+            let promiseArr = [];
+
+            for(let i=0; i*ps<maxCount; i++){
+                let b = i*ps + (i==0?i:1),
+                    e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
+                promiseArr.push(QQGroup.queryGroupMemberList(b, e));
+
+            }
+            Promise.all(promiseArr).then(datas=>{
+                datas.forEach((item, i)=>{
+                    arr = arr.concat(item);
+                });
+
+                if(arr.length>0){
+                    QQGroup.groupInfo.members = arr;
+                    QQGroup.exportGroupMemberList();
+                    oBtnStart.removeAttr('disabled').text('开始');
+                } else {
+                    oBtnStart.text('未登录');
+                    console.log('BmqyQQGroup: 请重新登录！');
+                }
+            });
+        },
+
+        queryGroupMemberList: function(b, e){
+            let begin = b;
+            let end = e;
+            return new Promise(function(resolve, reject){
+                let api = QQGroup.api.queryGrouopMemberList;
+                let gc = $('#groupList').val();
+
+                $.ajax({
                     url: api,
                     type: 'post',
+                    async: false,
                     data: {
                         gc: gc,
-                        st: b,
-                        end: e, //QQGroup.groupInfo.totalCount,
+                        st: begin,
+                        end: end,
                         sort: 0,
                         bkn: QQGroup.postData.bkn
                     },
                     dataType: 'json',
                     success: (res) => {
                         if (res.ec == 0) {
-                            arr.push.apply(arr, res.mems);
+                            resolve(res.mems);
                         }
                     },
                     error: (err) => {
-                        console.log(err, 'BmqyQQGroup: error!');
-                        oBtnStart.removeAttr('disabled').text('开始');
+                        console.log('BmqyQQGroup: error!');
+                        reject('BmqyQQGroup: error!');
                     }
                 });
-            }
-
-            if (arr.length > 0) {
-                QQGroup.groupInfo.members = arr;
-                QQGroup.exportGroupMemberList();
-                oBtnStart.removeAttr('disabled').text('开始');
-            } else {
-                oBtnStart.text('未登录');
-                console.log('BmqyQQGroup: 请重新登录！');
-            }
+            });
         },
 
         exportGroupMemberList: () => {
@@ -244,6 +262,11 @@
                                 break;
                             case 'lv':
                                 oMember[key] = QQGroup.getLvText(item[key]);
+                                break;
+                            case 'join_time':
+                                oMember[key] = QQGroup.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                            case 'last_speak_time':
+                                oMember[key] = QQGroup.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
                                 break;
                             default:
                                 oMember[key] = item[key];
@@ -332,12 +355,12 @@
                 for (let key in QQGroup.options.fields) {
                     let j = 1;
                     if (QQGroup.options.fields[key].switch) {
-                        j++;
                         if (j < k) {
                             sResult += memberList[i][key] + '\t';
                         } else {
                             sResult += memberList[i][key];
                         }
+                        j++;
                     }
                 }
                 if (i < len - 1) {
@@ -345,9 +368,14 @@
                 }
             }
 
-            GM_setClipboard(sResult, {
-                type: 'text',
-                mimetype: 'text/plain'
+            navigator.clipboard.writeText(sResult)
+            .then(() => {
+                console.log('文本已经成功复制到剪切板');
+            })
+            .catch(err => {
+                // This can happen if the user denies clipboard permissions:
+                // 如果用户没有授权，则抛出异常
+                console.error('无法复制此文本：', err);
             });
 
             oShowResult.html('已复制到剪贴板！');
@@ -439,6 +467,27 @@
             $('body').on('change', '#groupList', (e) => {
                 QQGroup.queryGroupInfo();
             });
+        },
+
+        formatDateTime: (timestamp, format)=> {
+            let dt = new Date(timestamp*1000);
+            let ret;
+            const opt = {
+                "Y+": dt.getFullYear().toString(),        // 年
+                "m+": (dt.getMonth() + 1).toString(),     // 月
+                "d+": dt.getDate().toString(),            // 日
+                "H+": dt.getHours().toString(),           // 时
+                "M+": dt.getMinutes().toString(),         // 分
+                "S+": dt.getSeconds().toString()          // 秒
+                // 有其他格式化字符需求可以继续添加，必须转化成字符串
+            };
+            for (let k in opt) {
+                ret = new RegExp("(" + k + ")").exec(format);
+                if (ret) {
+                    format = format.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+                };
+            };
+            return format;
         },
 
         getGenderText: (val) => {
