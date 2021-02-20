@@ -192,6 +192,8 @@
             let ps = 40;
             let promiseArr = [];
 
+            QQGroup.clearHistory();
+
             for(let i=0; i*ps<maxCount; i++){
                 let b = i*ps + (i==0?i:1),
                     e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
@@ -402,13 +404,13 @@
             //增加\t为了不让表格显示科学计数法或者其他格式
             for (let i = 0; i < memberList.length; i++) {
                 for (let item in memberList[i]) {
-                    str += `${memberList[i][item] + '\t'},`;
+                    str += `"${memberList[i][item] + '"\t'},`;
                 }
                 str += '\n';
             }
             //encodeURIComponent解决中文乱码
             let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
-            let oAlink = $('<a></a>').attr('href', uri).attr('download', 'QQ群成员列表.xlsx').attr('title', 'QQ群成员列表.xlsx').text('已导出：点此下载');
+            let oAlink = $('<a></a>').attr('href', uri).attr('download', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).attr('title', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).text('已导出：点此下载');
             oShowResult.append(oAlink);
         },
 
@@ -560,6 +562,9 @@
             oNewDiv.append(oNewBtn, oResult);
             let oBtnOpen = $('<span id="btnOpenBmqyQQGroup" class="button-wrap animated hide"><a class="button button-circle button-raised" href="javascript:;" title="Hello !\n点它我就出来了^_^！"><span class="iconLogo"></span></a></span>');
             $('body').append(oNewDiv, oBtnOpen);
+            if($('#bmqyQQGroupMemberBox').size()==0){
+                $('body').append(oNewDiv, oBtnOpen);
+            }
         },
     };
 
