@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@vue/cli": "^4.5.12",
-    "element-ui": "^2.15.1"
+    "element-ui": "^2.15.1",
+    "js-cookie": "^2.2.1"
   }
 }
