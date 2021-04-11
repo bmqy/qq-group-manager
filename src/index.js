@@ -4,6 +4,9 @@ import 'element-ui/lib/theme-chalk/index.css';
 import App from './app.vue';
 const Cookies = require('js-cookie');
 
+import animate from 'animate.css';
+Vue.use(animate);
+
 const appRoot = document.createElement('div');
 appRoot.id = 'app';
 document.body.appendChild(appRoot);

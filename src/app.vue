@@ -1,78 +1,82 @@
 <template>
-  <el-card class="box-card bmqyQQGroupManagerBox">
+  <el-card class="box-card bmqyQQGroupManagerBox animate__animated animate__bounce">
     <div slot="header" class="clearfix">
       <span class="title">{{name}}
         <span style="color:#909399;font-size:12px;font-weight:normal;">{{`ver${$app.getVersion()}`}}</span>
       </span>
       <el-button style="float: right; padding: 3px 0" type="text" circle icon="el-icon-warning-outline" :title="moreTips"></el-button>
     </div>
-    <fieldset>
-      <legend>
-        <b>1、选择一个QQ群：</b>
-      </legend>
-      <el-select v-model="currentGc" filterable size="mini" placeholder="请选择" @change="onChangeGc">
-        <el-option-group
-          key="create"
-          label="创建的群">
+    <div v-if="qqbkn == ''" style="color:#f56c6c;">请先登录你的QQ账号！</div>
+    <div v-if="qqbkn != ''">        
+      <fieldset>
+        <legend>
+          <b>1、选择一个QQ群：</b>
+        </legend>
+        <el-select v-model="currentGc" filterable size="mini" placeholder="请选择" @change="onChangeGc">
+          <el-option-group
+            key="create"
+            label="创建的群">
+            <el-option
+              v-for="item in groupList['create']"
+              :key="item.gc"
+              :label="item.gn"
+              :data-owner="item.owner"
+              :value="item.gc">
+            </el-option>
+          </el-option-group>
+          <el-option-group
+            key="join"
+            label="加入的群">
+            <el-option
+              v-for="item in groupList['join']"
+              :key="item.gc"
+              :label="htmlDecode(item.gn)"
+              :data-owner="item.owner"
+              :value="item.gc">
+            </el-option>
+          </el-option-group>
+        </el-select>
+      </fieldset>
+      <fieldset>
+        <legend>
+          <b>群信息：</b>
+        </legend>
+        <p v-if="currentGc == ''" style="color:#f56c6c;">请先选择一个群！</p>
+        <div v-if="currentGc != ''" class="bmqyQQGroupBaseInfo">
+          <p>群名称：{{groupInfo.gn}}</p>
+          <p>群号码：{{currentGc}}</p>
+          <p>群主QQ：{{groupInfo.owner}}</p>
+          <p>群成员数：{{`${groupInfo.count}/${groupInfo.max_count}`}}</p>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>
+          <b>2、选择导出项目：</b>
+        </legend>
+        <el-row :gutter="20">
+          <el-col :span="12" :offset="0" v-for="(item, index) in exportField" :key="index">
+            <el-checkbox v-model="item.checked" :value="item.name" :disabled="item.disabled">{{item.title}}</el-checkbox>
+          </el-col>
+        </el-row>
+      </fieldset>
+      <fieldset>
+        <legend>
+          <b>3、选择导出方式：</b>
+        </legend>
+        <el-select v-model="currentMode" size="mini" placeholder="请选择">
           <el-option
-            v-for="item in groupList['create']"
-            :key="item.gc"
-            :label="item.gn"
-            :data-owner="item.owner"
-            :value="item.gc">
+            v-for="item in exportMode"
+            :key="item"
+            :label="item"
+            :value="item">
           </el-option>
-        </el-option-group>
-        <el-option-group
-          key="join"
-          label="加入的群">
-          <el-option
-            v-for="item in groupList['join']"
-            :key="item.gc"
-            :label="htmlDecode(item.gn)"
-            :data-owner="item.owner"
-            :value="item.gc">
-          </el-option>
-        </el-option-group>
-      </el-select>
-    </fieldset>
-    <fieldset>
-      <legend>
-        <b>群信息：</b>
-      </legend>
-      <p v-if="currentGc == ''" style="color:#f56c6c;">请先选择一个群！</p>
-      <div v-if="currentGc != ''" class="bmqyQQGroupBaseInfo">
-        <p>群名称：{{groupInfo.gn}}</p>
-        <p>群号码：{{currentGc}}</p>
-        <p>群主QQ：{{groupInfo.owner}}</p>
-        <p>群成员数：{{`${groupInfo.count}/${groupInfo.max_count}`}}</p>
-      </div>
-    </fieldset>
-    <fieldset>
-      <legend>
-        <b>2、选择导出项目：</b>
-      </legend>
-      <el-row :gutter="20">
-        <el-col :span="12" :offset="0" v-for="(item, index) in exportField" :key="index">
-          <el-checkbox v-model="item.checked" :value="item.name" :disabled="item.disabled">{{item.title}}</el-checkbox>
-        </el-col>
+        </el-select>
+      </fieldset>
+      <el-row class="margin-top">
+        <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
       </el-row>
-    </fieldset>
-    <fieldset>
-      <legend>
-        <b>3、选择导出方式：</b>
-      </legend>
-      <el-select v-model="currentMode" size="mini" placeholder="请选择">
-        <el-option
-          v-for="item in exportMode"
-          :key="item"
-          :label="item"
-          :value="item">
-        </el-option>
-      </el-select>
-    </fieldset>
-    <el-row class="margin-top">
-      <el-button type="primary" :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
-    </el-row>
+      
+    </div>
   </el-card>
 </template>
 
@@ -148,9 +152,7 @@ export default {
         //queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
         //queryFriendList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_friend_list'
       },
-      queryData: {
-        bkn: ''
-      },      
+      qqbkn: '',
       groupList: {},
       currentGc: '',
       groupInfo: {
@@ -166,15 +168,15 @@ export default {
     }
   },
   created() {
-    this.getQQbkn();
+    this.getqqbkn();
     this.queryGroupList();
   },
   methods: {
-    getQQbkn(){
+    getqqbkn(){
       let vm = this;
       let skey = vm.$cookie.get("skey");
       if (!skey) {
-          QQGroup.postData.bkn = '';
+          vm.qqbkn = '';
           return false;
       };
       let bkn = null;
@@ -182,7 +184,7 @@ export default {
           t += (t << 5) + e.charAt(n).charCodeAt()
       }
       bkn = 2147483647 & t;
-      vm.queryData.bkn = bkn;
+      vm.qqbkn = bkn;
     },
     queryGroupList(){
       let vm = this;
@@ -191,7 +193,7 @@ export default {
         url: vm.api.queryGroupList,
         type: 'post',
         data: {
-            bkn: vm.queryData.bkn
+            bkn: vm.qqbkn
         },
         success: (res) => {
           if(res.errcode == 0){
@@ -245,7 +247,7 @@ export default {
             st: 0,
             end: 0,
             sort: 0,
-            bkn: vm.queryData.bkn
+            bkn: vm.qqbkn
           },
           success: (res) => {
             if (res.ec === 0) {
@@ -266,21 +268,27 @@ export default {
       });
     },
 
-    start(){
+    async start(){
       let vm = this;
       vm.btnText = '加载中...';
       vm.btnLoading = true;
 
-      console.log(vm.doQueryGroupMemberList());
+      let result = await vm.doQueryGroupMemberList();
+      console.log(result);
+      if(result.length > 0){        
+        vm.btnText = '开始';
+        vm.btnLoading = false;
+      } else {
+        console.log('加载失败...');
+      }
     },
 
     async doQueryGroupMemberList() {
+      let vm = this;
       let arr = [];
       let maxThread = vm.groupInfo.count;
       let ps = 40;
       let promiseArr = [];
-
-      //QQGroup.clearHistory();
 
       for(let i=0; i*ps<maxThread; i++){
         let b = i*ps + (i==0?i:1),
@@ -288,24 +296,13 @@ export default {
         promiseArr.push(vm.queryGroupMemberList(b, e));
 
       }
-      return await Promise.all(promiseArr);
-      /* await Promise.all(promiseArr).then(datas=>{
-        datas.forEach((item, i)=>{
-          arr = arr.concat(item);
-        });
-
-        if(arr.length>0){
-          vm.groupInfo.members = arr;
-          vm.exportGroupMemberList();
-          oBtnStart.removeAttr('disabled').text('开始');
-        } else {
-          oBtnStart.text('未登录');
-          console.log('BmqyQQGroup: 请重新登录！');
-        }
-      }); */
+      let r = await Promise.all(promiseArr);
+      arr = arr.concat(...r);
+      return arr;
     },
 
     async queryGroupMemberList(b, e){
+      let vm = this;
       let begin = b;
       let end = e;
       return new Promise(await function(resolve, reject){
@@ -320,12 +317,12 @@ export default {
             st: begin,
             end: end,
             sort: 0,
-            bkn: vm.queryData.bkn
+            bkn: vm.qqbkn
           },
           dataType: 'json',
           success: (res) => {
             if (res.ec == 0) {
-              return res.mems;
+              resolve(res.mems);
             } else {              
               console.log('BmqyQQGroupError:', res);
               reject('BmqyQQGroupError!');
@@ -405,7 +402,7 @@ export default {
     width: 300px;
     position:fixed;
     top:30px;
-    left:30px;
+    right:30px;
     border-radius: 10px;
     .margin-top{
       margin-top: 15px;
