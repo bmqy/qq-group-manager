@@ -205,7 +205,6 @@ export default {
     },
 
     onChangeGc(){
-      //this.initExportField();
       this.setGroupBaseInfo();
       this.queryGroupInfo();
     },
@@ -273,17 +272,28 @@ export default {
       vm.btnText = '加载中...';
       vm.btnLoading = true;
 
-      let result = await vm.doQueryGroupMemberList();
-      console.log(result);
-      if(result.length > 0){        
+      setTimeout(() => {        
+        vm.btnText = '开始';
+        vm.btnLoading = false;
+      }, 3000);
+      /* vm.doQueryGroupMemberList().then(res => {
+        if(res.length > 0){        
+          vm.btnText = '开始';
+          vm.btnLoading = false;
+        } else {
+          console.log('加载失败...');
+        }
+      }); */
+      //console.log(result);
+      /* if(result.length > 0){        
         vm.btnText = '开始';
         vm.btnLoading = false;
       } else {
         console.log('加载失败...');
-      }
+      } */
     },
 
-    async doQueryGroupMemberList() {
+    doQueryGroupMemberList() {
       let vm = this;
       let arr = [];
       let maxThread = vm.groupInfo.count;
@@ -296,9 +306,13 @@ export default {
         promiseArr.push(vm.queryGroupMemberList(b, e));
 
       }
-      let r = await Promise.all(promiseArr);
-      arr = arr.concat(...r);
-      return arr;
+
+      return new Promise(async (resolve, reject) => {
+        let r = await Promise.all(promiseArr);
+        arr = arr.concat(...r);
+        resolve(arr);
+      });
+      
     },
 
     async queryGroupMemberList(b, e){
@@ -418,7 +432,7 @@ export default {
       padding:10px;
       border:1px solid #ddd;
     }
-    p, /deep/ .el-checkbox__label{
+    p, ::v-deep .el-checkbox__label{
       font-size: 12px;
       line-height: 28px;
     }
