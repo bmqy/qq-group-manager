@@ -415,7 +415,7 @@ export default {
   .bmqyQQGroupManagerBox {
     width: 300px;
     position:fixed;
-    top:30px;
+    top:110px;
     right:30px;
     border-radius: 10px;
     .margin-top{
