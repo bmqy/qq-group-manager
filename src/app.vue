@@ -30,7 +30,7 @@
             <el-option
               v-for="item in groupList['join']"
               :key="item.gc"
-              :label="htmlDecode(item.gn)"
+              :label="$app.htmlDecode(item.gn)"
               :data-owner="item.owner"
               :value="item.gc">
             </el-option>
@@ -268,51 +268,30 @@ export default {
     },
 
     async start(){
-      let vm = this;
-      vm.btnText = '加载中...';
-      vm.btnLoading = true;
-
-      setTimeout(() => {        
-        vm.btnText = '开始';
-        vm.btnLoading = false;
-      }, 3000);
-      /* vm.doQueryGroupMemberList().then(res => {
-        if(res.length > 0){        
-          vm.btnText = '开始';
-          vm.btnLoading = false;
-        } else {
-          console.log('加载失败...');
-        }
-      }); */
-      //console.log(result);
-      /* if(result.length > 0){        
-        vm.btnText = '开始';
-        vm.btnLoading = false;
-      } else {
-        console.log('加载失败...');
-      } */
+      this.doQueryGroupMemberList()
     },
 
-    doQueryGroupMemberList() {
+    async doQueryGroupMemberList() {
       let vm = this;
       let arr = [];
       let maxThread = vm.groupInfo.count;
       let ps = 40;
-      let promiseArr = [];
+
+      vm.btnText = '加载中...';
+      vm.btnLoading = true;
 
       for(let i=0; i*ps<maxThread; i++){
         let b = i*ps + (i==0?i:1),
             e = (i*ps + ps)>maxThread ? maxThread : i*ps + ps;
-        promiseArr.push(vm.queryGroupMemberList(b, e));
-
+        
+        await vm.$app.delay();
+        let r = await vm.queryGroupMemberList(b, e);
+        arr.push(...r);
       }
 
-      return new Promise(async (resolve, reject) => {
-        let r = await Promise.all(promiseArr);
-        arr = arr.concat(...r);
-        resolve(arr);
-      });
-      
+      vm.btnText = '开始';
+      vm.btnLoading = false;
+      vm.$set(vm.groupInfo, 'mems', arr);
     },
 
     async queryGroupMemberList(b, e){
@@ -351,26 +330,27 @@ export default {
     },
 
     exportGroupMemberList(){
+      let vm = this;
       let oExportMode = $('#exportMode');
       let oExportMemberList = [];
-      QQGroup.groupInfo.members.forEach((item, i) => {
+      vm.groupInfo.members.forEach((item, i) => {
         let oMember = {};
-        for (let key in QQGroup.options.fields) {
-          if (QQGroup.options.fields[key].switch) {
+        for (let key in vm.options.fields) {
+          if (vm.options.fields[key].switch) {
             switch (key) {
               case 'g':
-                oMember[key] = QQGroup.getGenderText(item[key]);
+                oMember[key] = vm.getGenderText(item[key]);
                 break;
               case 'role':
-                oMember[key] = QQGroup.getRoleText(item[key]);
+                oMember[key] = vm.getRoleText(item[key]);
                 break;
               case 'lv':
-                oMember[key] = QQGroup.getLvText(item[key]);
+                oMember[key] = vm.getLvText(item[key]);
                 break;
               case 'join_time':
-                oMember[key] = QQGroup.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                oMember[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
               case 'last_speak_time':
-                oMember[key] = QQGroup.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                oMember[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
                 break;
               default:
                 oMember[key] = item[key];
@@ -382,21 +362,96 @@ export default {
       });
 
       if (oExportMode.val() == 1) {
-        QQGroup.exportGroupMemberListToTable(oExportMemberList);
+        vm.exportGroupMemberListToTable(oExportMemberList);
       } else {
-        QQGroup.exportGroupMemberListToPlaintext(oExportMemberList);
+        vm.exportGroupMemberListToPlaintext(oExportMemberList);
+      }
+    },
+    
+    exportGroupMemberListToPlaintext: (memberList) => {
+      let oShowResult = $('#showResult');
+      let sResult = '';
+      let len = memberList.length;
+      let k = QQGroup.getIncludFieldCount();
+      for (let i = 0; i < len; i++) {
+        for (let key in QQGroup.options.fields) {
+          let j = 1;
+          if (QQGroup.options.fields[key].switch) {
+            if (j < k) {
+              sResult += memberList[i][key] + '\t';
+            } else {
+              sResult += memberList[i][key];
+            }
+            j++;
+          }
+        }
+        if (i < len - 1) {
+          sResult += '\r\n';
+        }
+      }
+
+      GM_setClipboard(sResult, {
+        type: 'text',
+        mimetype: 'text/plain'
+      });
+
+      oShowResult.html('已复制到剪贴板！');
+      setTimeout(() => {
+        QQGroup.clearHistory();
+      }, 2000);
+    },
+
+    exportGroupMemberListToTable: (memberList) => {
+      let oShowResult = $('#showResult');
+      let oTable = $('<talbe></talbe>');
+      for (let i = 0; i < memberList.length; i++) {
+        let oTableTr = $('<tr></tr>');
+        for (let key in QQGroup.options.fields) {
+          if (QQGroup.options.fields[key].switch) {
+            let oTableTd = $('<td>' + memberList[i][key] + '</td>');
+            oTableTr.append(oTableTd);
+          }
+        }
+        oTable.append(oTableTr);
+      }
+
+      let str = ``;
+      //增加\t为了不让表格显示科学计数法或者其他格式
+      for (let i = 0; i < memberList.length; i++) {
+          for (let item in memberList[i]) {
+              str += `"${memberList[i][item] + '"\t'},`;
+          }
+          str += '\n';
+      }
+      //encodeURIComponent解决中文乱码
+      let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
+      let oAlink = $('<a></a>').attr('href', uri).attr('download', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).attr('title', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).text('已导出：点此下载');
+      oShowResult.append(oAlink);
+    },
+    
+    getGenderText(val){
+      if (val == 0) {
+        return '男';
+      } else if (val == 1) {
+        return '女';
+      } else {
+        return '未知';
       }
     },
 
-    htmlDecode(html){
-      if (html.length == 0) return "";
-      html = html.replace(/&amp;/g, "&");
-      html = html.replace(/&lt;/g, "<");
-      html = html.replace(/&gt;/g, ">");
-      html = html.replace(/&nbsp;/g, " ");
-      html = html.replace(/&quot/g, "'");
-      return html;
-    }
+    getRoleText(val){
+      if (val == 0) {
+        return '群主';
+      } else if (val == 1) {
+        return '管理员';
+      } else {
+        return '群员';
+      }
+    },
+
+    getLvText(json){
+      return vm.groupInfo.levelname[json.level] + '(' + json.point + ')';
+    },
   },
   computed: {    
     btnDisabled(){
