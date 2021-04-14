@@ -416,7 +416,7 @@ export default {
     width: 300px;
     position:fixed;
     top:110px;
-    right:30px;
+    right:100px;
     border-radius: 10px;
     .margin-top{
       margin-top: 15px;
