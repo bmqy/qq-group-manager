@@ -65,17 +65,21 @@
         </legend>
         <el-select v-model="currentMode" size="mini" placeholder="请选择">
           <el-option
-            v-for="item in exportMode"
-            :key="item"
-            :label="item"
-            :value="item">
+            v-for="(item, index) in exportMode"
+            :key="index"
+            :label="item.val"
+            :value="item.key"
+            :v-model="currentMode">
           </el-option>
         </el-select>
       </fieldset>
       <el-progress :percentage="percentage" :show-text="false" status="success"></el-progress>
 
-      <el-row class="margin-top">
-        <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
+      <el-row class="margin-top">        
+        <el-button-group>
+          <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
+          <el-button type="info" round icon="el-icon-download" v-if="percentage == 100" :title="currentMode=='plain' ? '已复制到剪贴板！' : '已导出点击下载！'" :disabled="currentMode=='plain'" @click="download">{{currentMode=='plain' ? '已复制' : '请下载'}}</el-button>
+        </el-button-group>
       </el-row>
     </div>
   </el-card>
@@ -138,10 +142,16 @@ export default {
         }
       ],
       exportMode: [
-        '纯文本',
-        '电子表格'
+        {
+          key: 'plain',
+          val: '纯文本'
+        },
+        {
+          key: 'xlsx',
+          val: '电子表格'
+        }
       ],
-      currentMode: '纯文本',
+      currentMode: 'plain',
       btnText: '开始',
       btnLoading: false,
       api: {
@@ -366,13 +376,13 @@ export default {
       });
 
       if (oExportMode.val() == 1) {
-        vm.exportGroupMemberListToTable(oExportMemberList);
+        vm.exportGroupMemberListToXlsx(oExportMemberList);
       } else {
-        vm.exportGroupMemberListToPlaintext(oExportMemberList);
+        vm.exportGroupMemberListToPlain(oExportMemberList);
       }
     },
     
-    exportGroupMemberListToPlaintext: (memberList) => {
+    exportGroupMemberListToPlain: (memberList) => {
       let oShowResult = $('#showResult');
       let sResult = '';
       let len = memberList.length;
@@ -405,7 +415,7 @@ export default {
       }, 2000);
     },
 
-    exportGroupMemberListToTable: (memberList) => {
+    exportGroupMemberListToXlsx: (memberList) => {
       let oShowResult = $('#showResult');
       let oTable = $('<talbe></talbe>');
       for (let i = 0; i < memberList.length; i++) {
@@ -431,6 +441,10 @@ export default {
       let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
       let oAlink = $('<a></a>').attr('href', uri).attr('download', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).attr('title', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).text('已导出：点此下载');
       oShowResult.append(oAlink);
+    },
+
+    download(){
+      console.log('xiazai');
     },
     
     getGenderText(val){
@@ -495,8 +509,11 @@ export default {
       font-size: 12px;
       line-height: 28px;
     }
+    .el-button-group {
+      display: flex;
+    }
     .el-button--primary{
-      width: 100%;
+      flex: 1;
     }
     .el-progress {
       position: absolute;
