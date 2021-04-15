@@ -72,10 +72,11 @@
           </el-option>
         </el-select>
       </fieldset>
+      <el-progress :percentage="percentage" :show-text="false" status="success"></el-progress>
+
       <el-row class="margin-top">
         <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
       </el-row>
-      
     </div>
   </el-card>
 </template>
@@ -165,6 +166,7 @@ export default {
           levelname: null,
           mems: []
       },
+      percentage: 0
     }
   },
   created() {
@@ -207,6 +209,7 @@ export default {
     onChangeGc(){
       this.setGroupBaseInfo();
       this.queryGroupInfo();
+      this.percentage = 0;
     },
 
     initExportField(){
@@ -274,19 +277,20 @@ export default {
     async doQueryGroupMemberList() {
       let vm = this;
       let arr = [];
-      let maxThread = vm.groupInfo.count;
+      let maxCount = vm.groupInfo.count;
       let ps = 40;
 
       vm.btnText = '加载中...';
       vm.btnLoading = true;
 
-      for(let i=0; i*ps<maxThread; i++){
+      for(let i=0; i*ps<maxCount; i++){
         let b = i*ps + (i==0?i:1),
-            e = (i*ps + ps)>maxThread ? maxThread : i*ps + ps;
+            e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
         
         await vm.$app.delay();
         let r = await vm.queryGroupMemberList(b, e);
         arr.push(...r);
+        vm.percentage = parseInt(e/maxCount*100);
       }
 
       vm.btnText = '开始';
@@ -493,6 +497,14 @@ export default {
     }
     .el-button--primary{
       width: 100%;
+    }
+    .el-progress {
+      position: absolute;
+      line-height: 1;
+      bottom: 0px;
+      z-index: 9;
+      left: 0;
+      right: 0;
     }
   }
 </style>
