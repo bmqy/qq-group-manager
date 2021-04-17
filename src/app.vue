@@ -75,12 +75,11 @@
       </fieldset>
       <el-progress :percentage="percentage" :show-text="false" status="success"></el-progress>
 
-      <el-row class="margin-top">        
-        <el-button-group>
-          <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
-          <el-button type="info" round icon="el-icon-download" v-if="percentage == 100" :title="currentMode=='plain' ? '已复制到剪贴板！' : '已导出点击下载！'" :disabled="currentMode=='plain'" @click="download">{{currentMode=='plain' ? '已复制' : '请下载'}}</el-button>
-        </el-button-group>
-      </el-row>
+      <div class="margin-top flex"> 
+        <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
+        
+        <div v-if="percentage == 100" v-html="result"></div>
+      </div>
     </div>
   </el-card>
 </template>
@@ -176,7 +175,8 @@ export default {
           levelname: null,
           mems: []
       },
-      percentage: 0
+      percentage: 0,
+      result: ''      
     }
   },
   created() {
@@ -343,63 +343,69 @@ export default {
       });
     },
 
-    exportGroupMemberList(){
+    formatGroupMember(){
       let vm = this;
-      let oExportMode = $('#exportMode');
-      let oExportMemberList = [];
-      vm.groupInfo.members.forEach((item, i) => {
-        let oMember = {};
-        for (let key in vm.options.fields) {
-          if (vm.options.fields[key].switch) {
+      vm.groupInfo.mems.forEach((item, i) => {        
+        for (let i=0; i<vm.exportField.length; i++) {
+          let field = vm.exportField[i];
+          let key = field.name;
+          if (field.checked) {
             switch (key) {
               case 'g':
-                oMember[key] = vm.getGenderText(item[key]);
+                item[key] = vm.getGenderText(item[key]);
                 break;
               case 'role':
-                oMember[key] = vm.getRoleText(item[key]);
+                item[key] = vm.getRoleText(item[key]);
                 break;
               case 'lv':
-                oMember[key] = vm.getLvText(item[key]);
+                item[key] = vm.getLvText(item[key]);
                 break;
               case 'join_time':
-                oMember[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                item[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                break;
               case 'last_speak_time':
-                oMember[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                item[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
                 break;
               default:
-                oMember[key] = item[key];
+                item[key] = item[key];
                 break;
             }
           }
         };
-        oExportMemberList.push(oMember);
       });
 
-      if (oExportMode.val() == 1) {
-        vm.exportGroupMemberListToXlsx(oExportMemberList);
-      } else {
-        vm.exportGroupMemberListToPlain(oExportMemberList);
+      switch (vm.currentMode) {
+        case 'plain':
+          vm.exportGroupMemberListToPlain();
+          break;
+        case 'xlsx':
+          vm.exportGroupMemberListToXlsx();
+          break;      
+        default:
+          break;
       }
     },
     
-    exportGroupMemberListToPlain: (memberList) => {
-      let oShowResult = $('#showResult');
+    exportGroupMemberListToPlain(){
+      let vm = this;
+      let memberList = vm.groupInfo.mems;
+      let k = vm.enabledExportFieldCount;
       let sResult = '';
-      let len = memberList.length;
-      let k = QQGroup.getIncludFieldCount();
-      for (let i = 0; i < len; i++) {
-        for (let key in QQGroup.options.fields) {
-          let j = 1;
-          if (QQGroup.options.fields[key].switch) {
-            if (j < k) {
+      for (let i = 0; i < memberList.length; i++) {
+        for (let j=0; j<vm.exportField.length; j++) {
+          let field = vm.exportField[j];
+          let l = 1;
+          let key = field.name;
+          if (field.checked) {
+            if (l < k) {
               sResult += memberList[i][key] + '\t';
             } else {
               sResult += memberList[i][key];
             }
-            j++;
+            l++;
           }
         }
-        if (i < len - 1) {
+        if (i < memberList.length - 1) {
           sResult += '\r\n';
         }
       }
@@ -409,42 +415,36 @@ export default {
         mimetype: 'text/plain'
       });
 
-      oShowResult.html('已复制到剪贴板！');
-      setTimeout(() => {
-        QQGroup.clearHistory();
-      }, 2000);
+      vm.result = '已复制到剪贴板！';
+      vm.$message.success('已复制到剪贴板！');
     },
 
-    exportGroupMemberListToXlsx: (memberList) => {
-      let oShowResult = $('#showResult');
-      let oTable = $('<talbe></talbe>');
-      for (let i = 0; i < memberList.length; i++) {
-        let oTableTr = $('<tr></tr>');
-        for (let key in QQGroup.options.fields) {
-          if (QQGroup.options.fields[key].switch) {
-            let oTableTd = $('<td>' + memberList[i][key] + '</td>');
-            oTableTr.append(oTableTd);
-          }
-        }
-        oTable.append(oTableTr);
-      }
-
+    exportGroupMemberListToXlsx(){
+      let vm = this;
+      let memberList = vm.groupInfo.mems;
+      let k = vm.enabledExportFieldCount;
       let str = ``;
       //增加\t为了不让表格显示科学计数法或者其他格式
       for (let i = 0; i < memberList.length; i++) {
-          for (let item in memberList[i]) {
-              str += `"${memberList[i][item] + '"\t'},`;
+        for (let j=0; j<vm.exportField.length; j++) {
+          let field = vm.exportField[j];
+          let key = field.name;
+          let l = 1;
+          if (field.checked) {
+            if (l < k) {
+              str += `"${memberList[i][key]}\t",`;
+            } else {
+              str += `"${memberList[i][key]}\t"`;
+            }            
+            l++;
           }
-          str += '\n';
+        }
+        str += '\n';
       }
       //encodeURIComponent解决中文乱码
       let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
-      let oAlink = $('<a></a>').attr('href', uri).attr('download', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).attr('title', `QQ群成员列表-${QQGroup.groupInfo.gn}.xlsx`).text('已导出：点此下载');
-      oShowResult.append(oAlink);
-    },
-
-    download(){
-      console.log('xiazai');
+      vm.result = '<a href="'+ uri +'" download="'+ `QQ群成员列表-${vm.groupInfo.gn}.xlsx` +'">已导出：点此下载</a>';
+      vm.$message.success('已导出请下载！');
     },
     
     getGenderText(val){
@@ -468,17 +468,50 @@ export default {
     },
 
     getLvText(json){
+      let vm = this;
       return vm.groupInfo.levelname[json.level] + '(' + json.point + ')';
     },
   },
   computed: {    
     btnDisabled(){
-      return this.currentGc == '';
+      return this.currentGc == '' || this.percentage == 100;
+    },
+    enabledExportFieldCount(){
+      let vm = this;
+      let i = 0;
+      for (let key in vm.exportField) {
+        if (vm.exportField[key].checked) {
+          i++;
+        }
+      }
+      return i;
     },
   },
   watch: {
-    currentGc(val, oldVal){
+    currentGc(n, o){
       //console.log(val);
+    },
+    percentage(n, o){
+      let vm = this;
+      if(n == 100){
+        vm.formatGroupMember();
+      }
+    },
+    currentMode(n, o){
+      let vm = this;
+      if(vm.percentage == 100){
+        switch (n) {
+          case 'plain':
+            vm.exportGroupMemberListToPlain();
+            break;
+          case 'xlsx':
+            vm.exportGroupMemberListToXlsx();
+            break;
+        
+          default:
+            break;
+        }
+      }
     }
   }
 }
@@ -509,12 +542,6 @@ export default {
       font-size: 12px;
       line-height: 28px;
     }
-    .el-button-group {
-      display: flex;
-    }
-    .el-button--primary{
-      flex: 1;
-    }
     .el-progress {
       position: absolute;
       line-height: 1;
@@ -522,6 +549,11 @@ export default {
       z-index: 9;
       left: 0;
       right: 0;
+    }
+    .flex{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
   }
 </style>
