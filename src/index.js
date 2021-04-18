@@ -2,6 +2,7 @@ import Vue from 'vue';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import App from './app.vue';
+import $ from 'jquery';
 const Cookies = require('js-cookie');
 
 import animate from 'animate.css';
@@ -14,13 +15,21 @@ document.body.appendChild(appRoot);
 Vue.prototype.$cookie = Cookies;
 Vue.prototype.$app = {
   getName() {
-    return GM_info['script']['name'];
+    try{
+      return GM_info['script']['name'];
+    } catch(e){      
+      return chrome.runtime.getManifest().name;
+    }
   },
   getNameSpace() {
     return GM_info['script']['namespace'];
   },
   getVersion() {
-    return GM_info['script']['version'];
+    try{
+      return GM_info['script']['version'];
+    } catch(e){      
+      return chrome.runtime.getManifest().version;
+    }
   },  
   delay(){
     let ms = Math.floor(Math.random()*3+1) * 1000;

@@ -27,7 +27,7 @@
             <el-option
               v-for="item in groupList['create']"
               :key="item.gc"
-              :label="item.gn"
+              :label="$app.htmlDecode(item.gn)"
               :data-owner="item.owner"
               :value="item.gc">
             </el-option>
@@ -51,7 +51,7 @@
         </legend>
         <p v-if="currentGc == ''" style="color:#f56c6c;">请先选择一个群！</p>
         <div v-if="currentGc != ''" class="bmqyQQGroupBaseInfo">
-          <p>群名称：{{groupInfo.gn}}</p>
+          <p>群名称：{{$app.htmlDecode(groupInfo.gn)}}</p>
           <p>群号码：{{currentGc}}</p>
           <p>群主QQ：{{groupInfo.owner}}</p>
           <p>群成员数：{{`${groupInfo.count}/${groupInfo.max_count}`}}</p>
@@ -213,7 +213,7 @@ export default {
     },
     queryGroupList(){
       let vm = this;
-
+      console.log('this', $);
       $.ajax({
         url: vm.api.queryGroupList,
         type: 'post',
@@ -221,8 +221,11 @@ export default {
             bkn: vm.qqbkn
         },
         success: (res) => {
-          if(res.errcode == 0){
+          if(res.errcode == 0 && res.ec == 0){
             vm.groupList = res;
+          } else {
+            vm.qqbkn = '';
+            vm.$message.error('登录失效，请重新登录！');
           }
         },
         error: (err) => console.log('BmqyQQGroup: error!')
@@ -423,13 +426,26 @@ export default {
         }
       }
 
-      GM_setClipboard(sResult, {
-        type: 'text',
-        mimetype: 'text/plain'
-      });
+      try{
+        GM_setClipboard(sResult, {
+          type: 'text',
+          mimetype: 'text/plain'
+        });
+        vm.result = '已复制到剪贴板！';
+        vm.$message.success('已复制到剪贴板！');
+      } catch(e){
+        navigator.clipboard.writeText(sResult)
+        .then(() => {        
+          vm.result = '已复制到剪贴板！';
+          vm.$message.success('已复制到剪贴板！');
+        })
+        .catch(err => {
+          // This can happen if the user denies clipboard permissions:
+          // 如果用户没有授权，则抛出异常
+          console.error('无法复制此文本：', err);
+        });
+      }
 
-      vm.result = '已复制到剪贴板！';
-      vm.$message.success('已复制到剪贴板！');
     },
 
     exportGroupMemberListToXlsx(){

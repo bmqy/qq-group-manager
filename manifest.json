@@ -4,7 +4,7 @@
       "default_title": "\u0051\u0051\u7fa4\u7ba1\u7406\u8005"
    },
    "content_scripts": [ {
-      "js": ["js/jquery.2.1.4.min.js", "js/js.cookie.min.js", "js/content.js"],
+      "js": ["js/content.js"],
       "matches": ["https://qun.qq.com/*"]
    } ],
    "icons": {
@@ -17,5 +17,5 @@
    "author": "bmqy",
    "update_url": "https://clients2.google.com/service/update2/crx",
    "permissions": ["tabs", "https://qun.qq.com/*"],
-   "version": "1.0.5"
+   "version": "2.0.0"
 }
