@@ -44,5 +44,8 @@ module.exports = {
     new VueLoaderPlugin(),
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin(),
-  ]
+  ],
+  optimization:{
+    minimize: false, // 禁止压缩混淆源代码
+  }
 }
