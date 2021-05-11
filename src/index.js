@@ -1,17 +1,8 @@
-import Vue from 'vue';
-import ElementUI from 'element-ui';
-import 'element-ui/lib/theme-chalk/index.css';
 import App from './app.vue';
-import $ from 'jquery';
-const Cookies = require('js-cookie');
-
-import animate from 'animate.css';
-Vue.use(animate);
 
 const appRoot = document.createElement('div');
 appRoot.id = 'app';
 document.body.appendChild(appRoot);
-
 Vue.prototype.$cookie = Cookies;
 Vue.prototype.$app = {
   getName() {
@@ -65,8 +56,6 @@ Vue.prototype.$app = {
     return format;
   },
 }
-
-Vue.use(ElementUI);
 
 new Vue({
   el: '#app',

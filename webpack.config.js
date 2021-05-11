@@ -1,10 +1,16 @@
-const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 module.exports = {
   entry: {
     app: './src/index.js'
+  },
+  externals: {
+    // 要引入的资源的名字：该模块提供给外部引用的名字(由对应的库自定)
+    'vue': 'Vue',
+    'element-ui': 'ElementUI',
+    'js-cookie': 'Cookies',
+    'jQuery': '$',
   },
   output: {
     filename: '[name].js',
@@ -27,16 +33,6 @@ module.exports = {
       {
         test: /\.(woff|woff2|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/, 
         loader: 'url-loader'
-      },
-      {
-        test: require.resolve('jquery'),
-        loader: 'expose-loader',
-        options: {
-          exposes: {
-            globalName: '$',
-            override: true
-          },
-        }
       }
     ]
   },

@@ -213,7 +213,6 @@ export default {
     },
     queryGroupList(){
       let vm = this;
-      console.log('this', $);
       $.ajax({
         url: vm.api.queryGroupList,
         type: 'post',
