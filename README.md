@@ -34,6 +34,6 @@ QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 
 
 ###  联系作者
-[@chanel](https://t.me/tgbmqy)
+[@chanel](https://t.me/tcbmqy)
 
-[@group](https://t.me/joinchat/FkWz4qftg94RFCb7)
+[@group](https://t.me/tgbmqy)
