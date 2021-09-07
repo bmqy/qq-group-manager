@@ -32,5 +32,8 @@ QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 
 > 注：导出“*.xlsx”参考：https://blog.csdn.net/hhzzcc_/article/details/80419396，感谢作者分享！
 
-如需反馈问题，请加Q群663099879，或扫描下面二维码快速加群  
-<img src="https://raw.githubusercontent.com/bmqy/taomi-tools/master/images/temp_qrcode_share_663099879.png" width="300" />
+
+###  联系作者
+[@chanel](https://t.me/tgbmqy)
+
+[@group](https://t.me/joinchat/FkWz4qftg94RFCb7)
