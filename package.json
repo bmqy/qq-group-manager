@@ -35,7 +35,7 @@
     "webpack-cli": "^4.6.0"
   },
   "dependencies": {
-    "@vue/cli": "^4.5.12",
+    "@vue/cli": "^5.0.8",
     "animate.css": "^4.1.1",
     "element-ui": "^2.15.1",
     "jquery": "^3.6.0",
