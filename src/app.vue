@@ -21,7 +21,7 @@
           <b>1、选择一个QQ群：</b>
         </legend>
         <el-select v-model="currentGc" filterable size="mini" placeholder="请选择" @change="onChangeGc">
-          <el-option-group
+          <el-option-group v-if="groupList['create']"
             key="create"
             label="创建的群">
             <el-option
@@ -32,11 +32,22 @@
               :value="item.gc">
             </el-option>
           </el-option-group>
-          <el-option-group
+          <el-option-group v-if="groupList['join']"
             key="join"
             label="加入的群">
             <el-option
               v-for="item in groupList['join']"
+              :key="item.gc"
+              :label="$app.htmlDecode(item.gn)"
+              :data-owner="item.owner"
+              :value="item.gc">
+            </el-option>
+          </el-option-group>
+          <el-option-group v-if="groupList['manage']"
+            key="manage"
+            label="管理的群">
+            <el-option
+              v-for="item in groupList['manage']"
               :key="item.gc"
               :label="$app.htmlDecode(item.gn)"
               :data-owner="item.owner"
@@ -251,7 +262,7 @@ export default {
       }
 
       for(let k in this.groupList){
-        if(k=='create' || k=='join'){
+        if(k=='create' || k=='join' || k=='manage'){
           let gl = this.groupList[k];
           gl.forEach(e => {
             if(e.gc == vm.currentGc){
