@@ -26,7 +26,7 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-(e=>{if(typeof GM_addStyle=="function"){GM_addStyle(e);return}const a=document.createElement("style");a.textContent=e,document.head.append(a)})(" .bmqyQQGroupManagerOpen[data-v-65e7090b]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-65e7090b]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-65e7090b]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-65e7090b] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-65e7090b] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-65e7090b] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-65e7090b] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-65e7090b],.bmqyQQGroupManagerBox[data-v-65e7090b] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-65e7090b]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-65e7090b]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-65e7090b]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-65e7090b]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-65e7090b]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-65e7090b]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
+(a=>{if(typeof GM_addStyle=="function"){GM_addStyle(a);return}const e=document.createElement("style");e.textContent=a,document.head.append(e)})(" .bmqyQQGroupManagerOpen[data-v-48a263f2]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-48a263f2]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-48a263f2]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-48a263f2] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-48a263f2] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-48a263f2] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-48a263f2] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-48a263f2],.bmqyQQGroupManagerBox[data-v-48a263f2] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-48a263f2]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-48a263f2]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-48a263f2]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-48a263f2]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-48a263f2]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-48a263f2]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
 
 (function (vue, ElementPlus, ElementPlusIconsVue, Cookies) {
   'use strict';
@@ -66,7 +66,7 @@
     }
     return target;
   };
-  const _withScopeId = (n) => (vue.pushScopeId("data-v-65e7090b"), n = n(), vue.popScopeId(), n);
+  const _withScopeId = (n) => (vue.pushScopeId("data-v-48a263f2"), n = n(), vue.popScopeId(), n);
   const _hoisted_1 = {
     slot: "header",
     class: "clearfix"
@@ -123,7 +123,7 @@
     _hoisted_15
   ];
   const _sfc_main = {
-    __name: "App",
+    __name: "app",
     setup(__props) {
       const { proxy } = vue.getCurrentInstance();
       const name = vue.ref("");
@@ -752,7 +752,7 @@
       };
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-65e7090b"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-48a263f2"]]);
   const app = vue.createApp(App);
   for (const [key, component] of Object.entries(ElementPlusIconsVue__namespace)) {
     app.component(key, component);
