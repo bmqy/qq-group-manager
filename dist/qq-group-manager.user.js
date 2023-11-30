@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         QQ群管理者
 // @namespace    http://www.bmqy.net/
-// @version      3.0.0
+// @version      3.0.1
 // @author       bmqy
 // @description  QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！
 // @license      ISC
@@ -26,7 +26,7 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-(a=>{if(typeof GM_addStyle=="function"){GM_addStyle(a);return}const e=document.createElement("style");e.textContent=a,document.head.append(e)})(" .bmqyQQGroupManagerOpen[data-v-48a263f2]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-48a263f2]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-48a263f2]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-48a263f2] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-48a263f2] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-48a263f2] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-48a263f2] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-48a263f2],.bmqyQQGroupManagerBox[data-v-48a263f2] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-48a263f2]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-48a263f2]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-48a263f2]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-48a263f2]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-48a263f2]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-48a263f2]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
+(e=>{if(typeof GM_addStyle=="function"){GM_addStyle(e);return}const a=document.createElement("style");a.textContent=e,document.head.append(a)})(" .bmqyQQGroupManagerOpen[data-v-0ec73a95]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-0ec73a95]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-0ec73a95]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-0ec73a95] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-0ec73a95] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-0ec73a95],.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-0ec73a95]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-0ec73a95]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-0ec73a95]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-0ec73a95]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-0ec73a95]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-0ec73a95]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
 
 (function (vue, ElementPlus, ElementPlusIconsVue, Cookies) {
   'use strict';
@@ -66,7 +66,7 @@
     }
     return target;
   };
-  const _withScopeId = (n) => (vue.pushScopeId("data-v-48a263f2"), n = n(), vue.popScopeId(), n);
+  const _withScopeId = (n) => (vue.pushScopeId("data-v-0ec73a95"), n = n(), vue.popScopeId(), n);
   const _hoisted_1 = {
     slot: "header",
     class: "clearfix"
@@ -318,6 +318,7 @@
         for (let i = 0; i * ps < maxCount; i++) {
           let b = i * ps + (i == 0 ? i : 1), e = i * ps + ps > maxCount ? maxCount : i * ps + ps;
           await proxy.$app.delay();
+          console.log("🚀 ~ file: App.vue:213 ~ doQueryGroupMemberList ~ b, e:", b, e);
           let r = await queryGroupMemberList(b, e);
           arr.push(...r);
           percentage.value = parseInt(e / maxCount * 100);
@@ -333,7 +334,10 @@
           _GM_xmlhttpRequest({
             method: "POST",
             url: api.value.queryGrouopMemberList,
-            data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=${begin}&end=${end}&sort=0&bkn=${qqbkn.value}`,
+            data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=${begin}&end=${end}&sort=0`,
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
             responseType: "json",
             onload: function(xhr) {
               if (xhr.status == 200) {
@@ -752,7 +756,7 @@
       };
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-48a263f2"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-0ec73a95"]]);
   const app = vue.createApp(App);
   for (const [key, component] of Object.entries(ElementPlusIconsVue__namespace)) {
     app.component(key, component);
