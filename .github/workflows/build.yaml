@@ -1,0 +1,44 @@
+name: build-script
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - master
+
+jobs:
+    build:
+        runs-on: ${{ matrix.operating-system }}
+        strategy:
+            matrix:
+                # in this example, there is a newer version already installed, 3.7.7, so the older version will be downloaded
+                operating-system: ['ubuntu-latest']
+
+        steps:
+            - name: 检查分支
+              uses: actions/checkout@master
+
+            - name: 安装node环境
+              uses: actions/setup-node@master
+              with:
+                node-version: "16.14.0"
+
+            - name: Install depends
+              run: |
+                  npm install
+
+            - name: Build
+              run: |
+                  npm run build
+
+            - name: 提交dist到仓库
+              run: |
+                git config --global user.email "qq88268459@126.com"
+                git config --global user.name "bmqy"
+                git add .
+                git commit -m "打包更新" -a
+
+            - name: 推送更新到仓库
+              uses: ad-m/github-push-action@master
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,21 +1,454 @@
+<script setup>
+const {proxy} = getCurrentInstance();
+const name = ref('')
+const moreTips = ref('如果对您有帮助，\n感谢您打赏^_^');
+const checked  = ref(false);
+const exportField = ref([
+{
+    name: 'uin',
+    title: 'QQ号',
+    checked: true,
+    disabled: true
+},
+{
+    name: 'role',
+    title: '群职务',
+    checked: false
+},
+{
+    name: 'nick',
+    title: '昵称',
+    checked: false
+},
+{
+    name: 'card',
+    title: '群名片',
+    checked: false
+},
+{
+    name: 'g',
+    title: '性别',
+    checked: false
+},
+{
+    name: 'qage',
+    title: 'Q龄',
+    checked: false
+},
+{
+    name: 'join_time',
+    title: '入群时间',
+    checked: false
+},
+{
+    name: 'lv',
+    title: '等级(积分)',
+    checked: false,
+    disabled: true
+},
+{
+    name: 'last_speak_time',
+    title: '最后发言',
+    checked: false
+}
+]);
+const exportMode = ref([
+{
+    key: 'plain',
+    val: '纯文本'
+},
+{
+    key: 'xlsx',
+    val: '电子表格'
+}
+]);
+const currentMode = ref('plain');
+const btnText = ref('开始');
+const btnLoading = ref(false);
+const api = ref({
+    queryGroupList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
+    queryGrouopInfo: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
+    queryGrouopMemberList: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
+    //queryGrouopMemberList: 'https://apinew.bmqy.net/api/qq/',
+    //queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
+    //queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
+    //queryFriendList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_friend_list'
+});
+const qqbkn = ref('');
+const groupList = ref({});
+const currentGc = ref('');
+const groupInfo = ref({
+    gc: 0,
+    gn: '',
+    owner: 0,
+    max_count: 0,
+    count: 0,
+    adm_num: 0,
+    levelname: null,
+    mems: []
+});
+const percentage = ref(0);
+const result = ref('');
+const appShow = ref(true);
+const showQrcode = ref(false);
+
+const getqqbkn = ()=>{
+    let skey = proxy.$cookie.get("skey");
+    if (!skey) {
+        qqbkn.value = '';
+        return false;
+    };
+    let bkn = null;
+    for (var e = skey, t = 5381, n = 0, o = e.length; o > n; ++n) {
+        t += (t << 5) + e.charAt(n).charCodeAt()
+    }
+    bkn = 2147483647 & t;
+    qqbkn.value = bkn;
+}
+const queryGroupList = ()=>{
+    GM_xmlhttpRequest({
+        method: 'POST',
+        url: api.value.queryGroupList,
+        data: `bkn=${qqbkn.value}`,
+        responseType: 'json',
+        onload: function (xhr) {
+            if (xhr.status == 200) {
+                let res = xhr.response;
+                if(res.errcode == 0 && res.ec == 0){
+                    groupList.value = res;
+                } else {
+                    qqbkn.value = '';
+                    proxy.$message.error('登录失效，请重新登录！');
+                }
+            } else {
+                console.log('BmqyQQGroup: error!')
+            }
+        },
+        onerror: function(xhr){
+            console.log('BmqyQQGroup: error!')
+        }
+    });
+}
+
+const onChangeGc = ()=>{
+    setGroupBaseInfo();
+    queryGroupInfo();
+    percentage.value = 0;
+}
+
+const initExportField = ()=>{
+    for(let i=1; i<exportField.value.length; i++){
+        exportField.value[i].checked = false;
+    }
+}
+
+const setGroupBaseInfo = ()=>{
+    if(currentGc.value == ''){
+        return false;
+    }
+
+    for(let k in groupList.value){
+    if(k=='create' || k=='join' || k=='manage'){
+        let gl = groupList.value[k];
+        gl.forEach(e => {
+            if(e.gc == currentGc.value){
+                groupInfo.value.owner = e.owner;
+                groupInfo.value.gn = e.gn;
+                return false;
+            }
+        });
+    };
+    }
+}
+
+const queryGroupInfo = ()=>{
+    GM_xmlhttpRequest({
+        method: 'POST',
+        url: api.value.queryGrouopInfo,
+        data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=0&end=0&sort=0&bkn=${qqbkn.value}`,
+        responseType: 'json',
+        onload: function (xhr) {
+            if (xhr.status == 200) {
+                let res = xhr.response;
+                if (res.ec === 0) {
+                    groupInfo.value.max_count = res.max_count;
+                    groupInfo.value.count = res.count;
+                    groupInfo.value.adm_num = res.adm_num;
+                    //groupInfo.value.mems = res.mems;
+                    if (res.levelname) {
+                    groupInfo.value.levelname = res.levelname;
+                    exportField.value[7].disabled = false;
+                    } else {
+                    exportField.value[7].checked = false;
+                    exportField.value[7].disabled = true;
+                    }
+                }
+            } else {
+                console.log('BmqyQQGroup: error!')
+            }
+        },
+        onerror: function(xhr){
+            console.log('BmqyQQGroup: error!')
+        }
+    });
+}
+
+const start = async ()=>{
+    doQueryGroupMemberList()
+}
+
+const doQueryGroupMemberList = async ()=>{
+    let arr = [];
+    let maxCount = groupInfo.value.count;
+    let ps = 40;
+
+    btnText.value = '加载中...';
+    btnLoading.value = true;
+
+    for(let i=0; i*ps<maxCount; i++){
+        let b = i*ps + (i==0?i:1),
+            e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
+        await proxy.$app.delay();
+        let r = await queryGroupMemberList(b, e);
+        arr.push(...r);
+        percentage.value = parseInt(e/maxCount*100);
+    }
+
+    btnText.value = '开始';
+    btnLoading.value = false;
+    groupInfo.value.mems = arr;
+}
+
+const queryGroupMemberList = async (b, e)=>{
+    let begin = b;
+    let end = e;
+
+    return new Promise((resolve, reject)=>{
+        GM_xmlhttpRequest({
+            method: 'POST',
+            url: api.value.queryGrouopMemberList,
+            data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=${begin}&end=${end}&sort=0&bkn=${qqbkn.value}`,
+            responseType: 'json',
+            onload: function (xhr) {
+                if (xhr.status == 200) {
+                    let res = xhr.response;
+                    if (res.ec == 0) {
+                        resolve(res.mems);
+                    } else {
+                        console.log('BmqyQQGroupError:', res);
+                        reject('BmqyQQGroupError!');
+                    }
+                } else {
+                    console.log('BmqyQQGroupError:', xhr.response);
+                    reject('BmqyQQGroupError!');
+                }
+            },
+            onerror: function(xhr){
+                console.log('BmqyQQGroupError:', err);
+                reject('BmqyQQGroupError!');
+            }
+        });
+    })
+}
+
+const formatGroupMember = ()=>{
+    groupInfo.value.mems.forEach((item, i) => {
+        for (let i=0; i<exportField.value.length; i++) {
+            let field = exportField.value[i];
+            let key = field.name;
+            if (field.checked) {
+            switch (key) {
+                case 'g':
+                item[key] = getGenderText(item[key]);
+                break;
+                case 'role':
+                item[key] = getRoleText(item[key]);
+                break;
+                case 'lv':
+                item[key] = getLvText(item[key]);
+                break;
+                case 'join_time':
+                item[key] = proxy.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                break;
+                case 'last_speak_time':
+                item[key] = proxy.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
+                break;
+                default:
+                item[key] = item[key];
+                break;
+            }
+            }
+        };
+    });
+
+    switch (currentMode.value) {
+    case 'plain':
+        exportGroupMemberListToPlain();
+        break;
+    case 'xlsx':
+        exportGroupMemberListToXlsx();
+        break;
+    default:
+        break;
+    }
+}
+    
+const exportGroupMemberListToPlain = ()=>{
+    let memberList = groupInfo.value.mems;
+    let k = enabledExportFieldCount.value;
+    let sResult = '';
+    for (let i = 0; i < memberList.length; i++) {
+        for (let j=0; j<exportField.value.length; j++) {
+            let field = exportField.value[j];
+            let l = 1;
+            let key = field.name;
+            if (field.checked) {
+            if (l < k) {
+                sResult += memberList[i][key] + '\t';
+            } else {
+                sResult += memberList[i][key];
+            }
+            l++;
+            }
+        }
+        if (i < memberList.length - 1) {
+            sResult += '\r\n';
+        }
+    }
+
+    try{
+        GM_setClipboard(sResult, {
+            type: 'text',
+            mimetype: 'text/plain'
+        });
+        result.value = '已复制到剪贴板！';
+        proxy.$message.success('已复制到剪贴板！');
+    } catch(e){
+        navigator.clipboard.writeText(sResult)
+        .then(() => {
+            result.value = '已复制到剪贴板！';
+            proxy.$message.success('已复制到剪贴板！');
+        })
+        .catch(err => {
+            // This can happen if the user denies clipboard permissions:
+            // 如果用户没有授权，则抛出异常
+            console.error('无法复制此文本：', err);
+        });
+    }
+
+}
+
+const exportGroupMemberListToXlsx = ()=>{
+    let memberList = groupInfo.value.mems;
+    let k = enabledExportFieldCount.value;
+    let str = ``;
+    //增加\t为了不让表格显示科学计数法或者其他格式
+    for (let i = 0; i < memberList.length; i++) {
+    for (let j=0; j<exportField.value.length; j++) {
+        let field = exportField.value[j];
+        let key = field.name;
+        let l = 1;
+        if (field.checked) {
+        if (l < k) {
+            str += `"${memberList[i][key]}\t",`;
+        } else {
+            str += `"${memberList[i][key]}\t"`;
+        }
+        l++;
+        }
+    }
+    str += '\n';
+    }
+    //encodeURIComponent解决中文乱码
+    let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
+    result.value = '<a href="'+ uri +'" download="'+ `QQ群成员列表-${groupInfo.value.gn}.xlsx` +'">已导出：点此下载</a>';
+    proxy.$message.success('已导出请下载！');
+}
+
+const getGenderText = (val)=>{
+    if (val == 0) {
+        return '男';
+    } else if (val == 1) {
+        return '女';
+    } else {
+        return '未知';
+    }
+}
+
+const getRoleText = (val)=>{
+    if (val == 0) {
+        return '群主';
+    } else if (val == 1) {
+        return '管理员';
+    } else {
+        return '群员';
+    }
+}
+
+const getLvText = (json)=>{
+    return groupInfo.value.levelname[json.level] + '(' + json.point + ')';
+}
+
+const btnDisabled = computed(()=>{
+    return currentGc.value == '' || percentage.value == 100;
+})
+const enabledExportFieldCount = computed(()=>{
+    let i = 0;
+    for (let key in exportField.value) {
+        if (exportField.value[key].checked) {
+            i++;
+        }
+    }
+    return i;
+})
+
+watch(percentage, async (n, o)=>{
+    if(n == 100){
+        await formatGroupMember();
+    }
+})
+watch(currentMode, async (n, o)=>{
+    if(percentage.value == 100){
+    switch (n) {
+        case 'plain':
+        exportGroupMemberListToPlain();
+        break;
+        case 'xlsx':
+        exportGroupMemberListToXlsx();
+        break;
+    
+        default:
+        break;
+    }
+    }
+})
+
+onBeforeMount(()=>{
+    getqqbkn();
+    queryGroupList();
+})
+</script>
+
 <template>
 <div>  
-  <el-button class="bmqyQQGroupManagerOpen animate__animated animate__fadeInRight" v-show="!appShow" type="primary" icon="el-icon-s-promotion" circle @click.native="appShow=true" title="打开面板"></el-button>
+  <el-button class="bmqyQQGroupManagerOpen animate__animated animate__fadeInRight" v-show="!appShow" type="primary" icon="Promotion" circle @click.native="appShow=true" title="打开面板"></el-button>
   <el-card v-show="appShow" class="box-card bmqyQQGroupManagerBox animate__animated animate__bounce">
     <div slot="header" class="clearfix">
       <span class="title">{{name}}
         <span style="color:#909399;font-size:12px;font-weight:normal;">{{`ver${$app.getVersion()}`}}</span>
       </span>
       <el-dropdown style="float: right; padding: 3px 0" trigger="click">
-        <el-button type="text"><i class="el-icon-s-tools"></i></el-button>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item icon="el-icon-coffee-cup" @mousemove.native="showQrcode=true" @mouseout.native="showQrcode=fasle" :title="moreTips">请喝咖啡</el-dropdown-item>
-          <el-dropdown-item icon="el-icon-circle-close" @click.native="appShow=false">关闭面板</el-dropdown-item>
-        </el-dropdown-menu>
+        <el-button type="text"><el-icon><Tools /></el-icon></el-button>
+        <template #dropdown>
+            <el-dropdown-menu>
+                <el-dropdown-item icon="CoffeeCup" @mousemove.native="showQrcode=true" @mouseout.native="showQrcode=fasle" :title="moreTips">请喝咖啡</el-dropdown-item>
+                <el-dropdown-item icon="CircleClose" @click.native="appShow=false">关闭面板</el-dropdown-item>
+            </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </div>
     <div v-if="qqbkn == ''" style="color:#f56c6c;">请先登录你的QQ账号！</div>
-    <div v-if="qqbkn != ''">        
+    <div v-if="qqbkn != ''">
       <fieldset>
         <legend>
           <b>1、选择一个QQ群：</b>
@@ -60,7 +493,7 @@
         <legend>
           <b>群信息：</b>
         </legend>
-        <p v-if="currentGc == ''" style="color:#f56c6c;">请先选择一个群！</p>
+        <p v-if="currentGc == ''" style="color:#f56c6c;font-size: 12px;">请先选择一个群！</p>
         <div v-if="currentGc != ''" class="bmqyQQGroupBaseInfo">
           <p>群名称：{{$app.htmlDecode(groupInfo.gn)}}</p>
           <p>群号码：{{currentGc}}</p>
@@ -94,7 +527,7 @@
       </fieldset>
       <el-progress :percentage="percentage" :show-text="false" status="success"></el-progress>
 
-      <div class="margin-top flex"> 
+      <div class="margin-top flex">
         <el-button type="primary" round :disabled="btnDisabled" :loading="btnLoading" @click="start">{{btnText}}</el-button>
         
         <div v-if="percentage == 100" v-html="result"></div>
@@ -106,521 +539,94 @@
 </div>
 </template>
 
-<script>
-export default {
-  data(){
-    return {
-      name: this.$app.getName(),
-      moreTips: '如果对您有帮助，\n感谢您打赏^_^',
-      checked: false,
-      exportField: [
-        {
-          name: 'uin',
-          title: 'QQ号',
-          checked: true,
-          disabled: true
-        },
-        {
-          name: 'role',
-          title: '群职务',
-          checked: false
-        },
-        {
-          name: 'nick',
-          title: '昵称',
-          checked: false
-        },
-        {
-          name: 'card',
-          title: '群名片',
-          checked: false
-        },
-        {
-          name: 'g',
-          title: '性别',
-          checked: false
-        },
-        {
-          name: 'qage',
-          title: 'Q龄',
-          checked: false
-        },
-        {
-          name: 'join_time',
-          title: '入群时间',
-          checked: false
-        },
-        {
-          name: 'lv',
-          title: '等级(积分)',
-          checked: false,
-          disabled: true
-        },
-        {
-          name: 'last_speak_time',
-          title: '最后发言',
-          checked: false
-        }
-      ],
-      exportMode: [
-        {
-          key: 'plain',
-          val: '纯文本'
-        },
-        {
-          key: 'xlsx',
-          val: '电子表格'
-        }
-      ],
-      currentMode: 'plain',
-      btnText: '开始',
-      btnLoading: false,
-      api: {
-        queryGroupList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_group_list',
-        queryGrouopInfo: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
-        queryGrouopMemberList: 'https://qun.qq.com/cgi-bin/qun_mgr/search_group_members',
-        //queryGrouopMemberList: 'https://apinew.bmqy.net/api/qq/',
-        //queryGrouopPublish: 'https://qun.qq.com/cgi-bin/qiandao/sign/publish',
-        //queryGrouopGalleryTemplate: 'https://qun.qq.com/cgi-bin/qiandao/gallery_template?gc=authorQGroup&time=替换文本',
-        //queryFriendList: 'https://qun.qq.com/cgi-bin/qun_mgr/get_friend_list'
-      },
-      qqbkn: '',
-      groupList: {},
-      currentGc: '',
-      groupInfo: {
-          gc: 0,
-          gn: '',
-          owner: 0,
-          max_count: 0,
-          count: 0,
-          adm_num: 0,
-          levelname: null,
-          mems: []
-      },
-      percentage: 0,
-      result: '',
-      appShow: true,
-      showQrcode: false
-    }
-  },
-  created() {
-    this.getqqbkn();
-    this.queryGroupList();
-  },
-  methods: {
-    getqqbkn(){
-      let vm = this;
-      let skey = vm.$cookie.get("skey");
-      if (!skey) {
-          vm.qqbkn = '';
-          return false;
-      };
-      let bkn = null;
-      for (var e = skey, t = 5381, n = 0, o = e.length; o > n; ++n) {
-          t += (t << 5) + e.charAt(n).charCodeAt()
-      }
-      bkn = 2147483647 & t;
-      vm.qqbkn = bkn;
-    },
-    queryGroupList(){
-      let vm = this;
-      $.ajax({
-        url: vm.api.queryGroupList,
-        type: 'post',
-        data: {
-            bkn: vm.qqbkn
-        },
-        success: (res) => {
-          if(res.errcode == 0 && res.ec == 0){
-            vm.groupList = res;
-          } else {
-            vm.qqbkn = '';
-            vm.$message.error('登录失效，请重新登录！');
-          }
-        },
-        error: (err) => console.log('BmqyQQGroup: error!')
-      });
-    },
-
-    onChangeGc(){
-      this.setGroupBaseInfo();
-      this.queryGroupInfo();
-      this.percentage = 0;
-    },
-
-    initExportField(){
-      let vm = this;
-      for(let i=1; i<vm.exportField.length; i++){        
-        vm.$set(vm.exportField[i], 'checked', false);
-      }
-    },
-
-    setGroupBaseInfo(){
-      let vm = this;
-      if(vm.currentGc == ''){
-        return false;
-      }
-
-      for(let k in this.groupList){
-        if(k=='create' || k=='join' || k=='manage'){
-          let gl = this.groupList[k];
-          gl.forEach(e => {
-            if(e.gc == vm.currentGc){
-              vm.$set(vm.groupInfo, 'owner', e.owner);
-              vm.$set(vm.groupInfo, 'gn', e.gn);
-              return false;
-            }
-          });
-        };
-      }
-    },
-
-    queryGroupInfo(){
-      let vm = this;
-      $.ajax({
-          url: vm.api.queryGrouopInfo,
-          type: 'post',
-          data: {
-            gc: vm.currentGc,
-            st: 0,
-            end: 0,
-            sort: 0,
-            bkn: vm.qqbkn
-          },
-          success: (res) => {
-            if (res.ec === 0) {
-              vm.$set(vm.groupInfo, 'max_count', res.max_count);
-              vm.$set(vm.groupInfo, 'count', res.count);
-              vm.$set(vm.groupInfo, 'adm_num', res.adm_num);
-              //vm.$set(vm.groupInfo, 'mems', res.mems);
-              if (res.levelname) {
-                vm.$set(vm.groupInfo, 'levelname', res.levelname);
-                vm.$set(vm.exportField[7], 'disabled', false);
-              } else {
-                vm.$set(vm.exportField[7], 'checked', false);
-                vm.$set(vm.exportField[7], 'disabled', true);
-              }
-            }
-          },
-          error: (err) => console.log('BmqyQQGroup: error!')
-      });
-    },
-
-    async start(){
-      this.doQueryGroupMemberList()
-    },
-
-    async doQueryGroupMemberList() {
-      let vm = this;
-      let arr = [];
-      let maxCount = vm.groupInfo.count;
-      let ps = 40;
-
-      vm.btnText = '加载中...';
-      vm.btnLoading = true;
-
-      for(let i=0; i*ps<maxCount; i++){
-        let b = i*ps + (i==0?i:1),
-            e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
-        
-        await vm.$app.delay();
-        let r = await vm.queryGroupMemberList(b, e);
-        arr.push(...r);
-        vm.percentage = parseInt(e/maxCount*100);
-      }
-
-      vm.btnText = '开始';
-      vm.btnLoading = false;
-      vm.$set(vm.groupInfo, 'mems', arr);
-    },
-
-    async queryGroupMemberList(b, e){
-      let vm = this;
-      let begin = b;
-      let end = e;
-      return new Promise(await function(resolve, reject){
-        let api = vm.api.queryGrouopMemberList;
-
-        $.ajax({
-          url: api,
-          type: 'post',
-          async: false,
-          data: {
-            gc: vm.currentGc,
-            st: begin,
-            end: end,
-            sort: 0,
-            bkn: vm.qqbkn
-          },
-          dataType: 'json',
-          success: (res) => {
-            if (res.ec == 0) {
-              resolve(res.mems);
-            } else {              
-              console.log('BmqyQQGroupError:', res);
-              reject('BmqyQQGroupError!');
-            }
-          },
-          error: (err) => {
-            console.log('BmqyQQGroupError:', err);
-            reject('BmqyQQGroupError!');
-          }
-        });
-      });
-    },
-
-    formatGroupMember(){
-      let vm = this;
-      vm.groupInfo.mems.forEach((item, i) => {        
-        for (let i=0; i<vm.exportField.length; i++) {
-          let field = vm.exportField[i];
-          let key = field.name;
-          if (field.checked) {
-            switch (key) {
-              case 'g':
-                item[key] = vm.getGenderText(item[key]);
-                break;
-              case 'role':
-                item[key] = vm.getRoleText(item[key]);
-                break;
-              case 'lv':
-                item[key] = vm.getLvText(item[key]);
-                break;
-              case 'join_time':
-                item[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
-                break;
-              case 'last_speak_time':
-                item[key] = vm.$app.formatDateTime(item[key], 'YYYY-mm-dd HH:MM');
-                break;
-              default:
-                item[key] = item[key];
-                break;
-            }
-          }
-        };
-      });
-
-      switch (vm.currentMode) {
-        case 'plain':
-          vm.exportGroupMemberListToPlain();
-          break;
-        case 'xlsx':
-          vm.exportGroupMemberListToXlsx();
-          break;      
-        default:
-          break;
-      }
-    },
-    
-    exportGroupMemberListToPlain(){
-      let vm = this;
-      let memberList = vm.groupInfo.mems;
-      let k = vm.enabledExportFieldCount;
-      let sResult = '';
-      for (let i = 0; i < memberList.length; i++) {
-        for (let j=0; j<vm.exportField.length; j++) {
-          let field = vm.exportField[j];
-          let l = 1;
-          let key = field.name;
-          if (field.checked) {
-            if (l < k) {
-              sResult += memberList[i][key] + '\t';
-            } else {
-              sResult += memberList[i][key];
-            }
-            l++;
-          }
-        }
-        if (i < memberList.length - 1) {
-          sResult += '\r\n';
-        }
-      }
-
-      try{
-        GM_setClipboard(sResult, {
-          type: 'text',
-          mimetype: 'text/plain'
-        });
-        vm.result = '已复制到剪贴板！';
-        vm.$message.success('已复制到剪贴板！');
-      } catch(e){
-        navigator.clipboard.writeText(sResult)
-        .then(() => {        
-          vm.result = '已复制到剪贴板！';
-          vm.$message.success('已复制到剪贴板！');
-        })
-        .catch(err => {
-          // This can happen if the user denies clipboard permissions:
-          // 如果用户没有授权，则抛出异常
-          console.error('无法复制此文本：', err);
-        });
-      }
-
-    },
-
-    exportGroupMemberListToXlsx(){
-      let vm = this;
-      let memberList = vm.groupInfo.mems;
-      let k = vm.enabledExportFieldCount;
-      let str = ``;
-      //增加\t为了不让表格显示科学计数法或者其他格式
-      for (let i = 0; i < memberList.length; i++) {
-        for (let j=0; j<vm.exportField.length; j++) {
-          let field = vm.exportField[j];
-          let key = field.name;
-          let l = 1;
-          if (field.checked) {
-            if (l < k) {
-              str += `"${memberList[i][key]}\t",`;
-            } else {
-              str += `"${memberList[i][key]}\t"`;
-            }            
-            l++;
-          }
-        }
-        str += '\n';
-      }
-      //encodeURIComponent解决中文乱码
-      let uri = 'data:text/xlsx;charset=utf-8,\ufeff' + encodeURIComponent(str);
-      vm.result = '<a href="'+ uri +'" download="'+ `QQ群成员列表-${vm.groupInfo.gn}.xlsx` +'">已导出：点此下载</a>';
-      vm.$message.success('已导出请下载！');
-    },
-    
-    getGenderText(val){
-      if (val == 0) {
-        return '男';
-      } else if (val == 1) {
-        return '女';
-      } else {
-        return '未知';
-      }
-    },
-
-    getRoleText(val){
-      if (val == 0) {
-        return '群主';
-      } else if (val == 1) {
-        return '管理员';
-      } else {
-        return '群员';
-      }
-    },
-
-    getLvText(json){
-      let vm = this;
-      return vm.groupInfo.levelname[json.level] + '(' + json.point + ')';
-    },
-  },
-  computed: {    
-    btnDisabled(){
-      return this.currentGc == '' || this.percentage == 100;
-    },
-    enabledExportFieldCount(){
-      let vm = this;
-      let i = 0;
-      for (let key in vm.exportField) {
-        if (vm.exportField[key].checked) {
-          i++;
-        }
-      }
-      return i;
-    },
-  },
-  watch: {
-    currentGc(n, o){
-      //console.log(val);
-    },
-    percentage(n, o){
-      let vm = this;
-      if(n == 100){
-        vm.formatGroupMember();
-      }
-    },
-    currentMode(n, o){
-      let vm = this;
-      if(vm.percentage == 100){
-        switch (n) {
-          case 'plain':
-            vm.exportGroupMemberListToPlain();
-            break;
-          case 'xlsx':
-            vm.exportGroupMemberListToXlsx();
-            break;
-        
-          default:
-            break;
-        }
-      }
-    }
-  }
+<style scoped lang="scss">
+.bmqyQQGroupManagerOpen {
+    position: fixed;
+    top: 110px;
+    right: 100px;
 }
-</script>
 
-<style lang="scss" scoped>
-  .bmqyQQGroupManagerOpen{
-    position:fixed;
-    top:110px;
-    right:100px;
-  }
-  .bmqyQQGroupManagerBox {
+.bmqyQQGroupManagerBox {
     width: 300px;
-    position:fixed;
-    top:110px;
-    right:100px;
+    position: fixed;
+    top: 110px;
+    right: 100px;
     border-radius: 10px;
-    .margin-top{
-      margin-top: 15px;
+    z-index: 999;
+
+    .margin-top {
+        margin-top: 15px;
     }
-    ::v-deep .el-card__header{        
-      .title {
-        font-size: 14px;
-        font-weight: 600;
-      }
-      .el-button--text {
-        padding: 0;
-      }
+
+    :deep(.el-card__header) {
+        .title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .el-button--text {
+            padding: 0;
+        }
     }
-    fieldset{
-      margin-top:10px;
-      padding:10px;
-      border:1px solid #ddd;
+
+    :deep(fieldset) {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #ddd;
+
+        legend {
+            b {
+                font-size: 14px;
+            }
+        }
     }
-    p, ::v-deep .el-checkbox__label{
-      font-size: 12px;
-      line-height: 28px;
+
+    p,
+    :deep(.el-checkbox__label) {
+        font-size: 12px;
+        line-height: 28px;
     }
+
     .el-progress {
-      position: absolute;
-      line-height: 1;
-      bottom: 0px;
-      z-index: 9;
-      left: 0;
-      right: 1px;
+        position: absolute;
+        line-height: 1;
+        bottom: 0px;
+        z-index: 9;
+        left: 0;
+        right: 1px;
     }
-    .flex{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+
+    .flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    .qrcodeCont{
-      background-color: #fff;
-      position: absolute;
-      right: 150px;
-      top: 65px;
-      width: 100px;
-      border: 1px solid #e6e6e6;
-      border-radius: 5px;
-      box-shadow: 0 0 1px 0 #ccc;
-      img{
-        width:100px;
-        height:100px;
-      }
-      span{
-        display:inline-block;
-        text-align:center;
-        color:#999;
-        font-weight:normal;
-      }
+
+    .bmqyQQGroupBaseInfo {
+        font-size: 12px;
     }
-  }
+
+    .qrcodeCont {
+        background-color: #fff;
+        position: absolute;
+        right: 85px;
+        top: 67px;
+        width: 100px;
+        border: 1px solid #e6e6e6;
+        border-radius: 5px;
+        box-shadow: 0 0 1px 0 #ccc;
+
+        img {
+            width: 100px;
+            height: 100px;
+        }
+
+        span {
+            display: inline-block;
+            text-align: center;
+            color: #999;
+            font-weight: normal;
+        }
+    }
+}
 </style>
