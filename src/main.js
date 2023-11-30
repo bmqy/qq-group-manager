@@ -4,7 +4,7 @@ import 'element-plus/dist/index.css'
 import 'animate.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import Cookies from 'js-cookie'
-import App from './App.vue';
+import App from './app.vue';
 
 const app = createApp(App);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
