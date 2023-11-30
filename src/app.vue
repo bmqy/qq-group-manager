@@ -209,6 +209,7 @@ const doQueryGroupMemberList = async ()=>{
         let b = i*ps + (i==0?i:1),
             e = (i*ps + ps)>maxCount ? maxCount : i*ps + ps;
         await proxy.$app.delay();
+        console.log("🚀 ~ file: App.vue:213 ~ doQueryGroupMemberList ~ b, e:", b, e)
         let r = await queryGroupMemberList(b, e);
         arr.push(...r);
         percentage.value = parseInt(e/maxCount*100);
@@ -227,7 +228,10 @@ const queryGroupMemberList = async (b, e)=>{
         GM_xmlhttpRequest({
             method: 'POST',
             url: api.value.queryGrouopMemberList,
-            data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=${begin}&end=${end}&sort=0&bkn=${qqbkn.value}`,
+            data: `bkn=${qqbkn.value}&gc=${currentGc.value}&st=${begin}&end=${end}&sort=0`,
+            headers:  {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
             responseType: 'json',
             onload: function (xhr) {
                 if (xhr.status == 200) {

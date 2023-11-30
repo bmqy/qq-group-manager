@@ -1,7 +1,7 @@
 {
   "name": "qq-group-manager",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！",
     "license": "ISC",
     "repository": {
