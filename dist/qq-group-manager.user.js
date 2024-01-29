@@ -26,7 +26,7 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
-(e=>{if(typeof GM_addStyle=="function"){GM_addStyle(e);return}const a=document.createElement("style");a.textContent=e,document.head.append(a)})(" .bmqyQQGroupManagerOpen[data-v-0ec73a95]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-0ec73a95]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-0ec73a95]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-0ec73a95] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-0ec73a95] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-0ec73a95],.bmqyQQGroupManagerBox[data-v-0ec73a95] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-0ec73a95]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-0ec73a95]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-0ec73a95]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-0ec73a95]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-0ec73a95]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-0ec73a95]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
+(e=>{if(typeof GM_addStyle=="function"){GM_addStyle(e);return}const d=document.createElement("style");d.textContent=e,document.head.append(d)})(" .bmqyQQGroupManagerOpen[data-v-8032fd7d]{position:fixed;top:110px;right:100px}.bmqyQQGroupManagerBox[data-v-8032fd7d]{width:300px;position:fixed;top:110px;right:100px;border-radius:10px;z-index:999}.bmqyQQGroupManagerBox .margin-top[data-v-8032fd7d]{margin-top:15px}.bmqyQQGroupManagerBox[data-v-8032fd7d] .el-card__header .title{font-size:14px;font-weight:600}.bmqyQQGroupManagerBox[data-v-8032fd7d] .el-card__header .el-button--text{padding:0}.bmqyQQGroupManagerBox[data-v-8032fd7d] fieldset{margin-top:10px;padding:10px;border:1px solid #ddd}.bmqyQQGroupManagerBox[data-v-8032fd7d] fieldset legend b{font-size:14px}.bmqyQQGroupManagerBox p[data-v-8032fd7d],.bmqyQQGroupManagerBox[data-v-8032fd7d] .el-checkbox__label{font-size:12px;line-height:28px}.bmqyQQGroupManagerBox .el-progress[data-v-8032fd7d]{position:absolute;line-height:1;bottom:0;z-index:9;left:0;right:1px}.bmqyQQGroupManagerBox .flex[data-v-8032fd7d]{display:flex;justify-content:space-between;align-items:center}.bmqyQQGroupManagerBox .bmqyQQGroupBaseInfo[data-v-8032fd7d]{font-size:12px}.bmqyQQGroupManagerBox .qrcodeCont[data-v-8032fd7d]{background-color:#fff;position:absolute;right:85px;top:67px;width:100px;border:1px solid #e6e6e6;border-radius:5px;box-shadow:0 0 1px #ccc}.bmqyQQGroupManagerBox .qrcodeCont img[data-v-8032fd7d]{width:100px;height:100px}.bmqyQQGroupManagerBox .qrcodeCont span[data-v-8032fd7d]{display:inline-block;text-align:center;color:#999;font-weight:400} ");
 
 (function (vue, ElementPlus, ElementPlusIconsVue, Cookies) {
   'use strict';
@@ -66,7 +66,7 @@
     }
     return target;
   };
-  const _withScopeId = (n) => (vue.pushScopeId("data-v-0ec73a95"), n = n(), vue.popScopeId(), n);
+  const _withScopeId = (n) => (vue.pushScopeId("data-v-8032fd7d"), n = n(), vue.popScopeId(), n);
   const _hoisted_1 = {
     slot: "header",
     class: "clearfix"
@@ -184,8 +184,8 @@
           val: "纯文本"
         },
         {
-          key: "xlsx",
-          val: "电子表格"
+          key: "csv",
+          val: "电子表格(csv)"
         }
       ]);
       const currentMode = vue.ref("plain");
@@ -393,8 +393,8 @@
           case "plain":
             exportGroupMemberListToPlain();
             break;
-          case "xlsx":
-            exportGroupMemberListToXlsx();
+          case "csv":
+            exportGroupMemberListToCsv();
             break;
         }
       };
@@ -436,10 +436,17 @@
           });
         }
       };
-      const exportGroupMemberListToXlsx = () => {
+      const exportGroupMemberListToCsv = () => {
         let memberList = groupInfo.value.mems;
         let k = enabledExportFieldCount.value;
         let str = ``;
+        for (let key in exportField.value) {
+          if (exportField.value[key].checked) {
+            str += exportField.value[key].title + `,`;
+          }
+        }
+        str += `
+`;
         for (let i = 0; i < memberList.length; i++) {
           for (let j = 0; j < exportField.value.length; j++) {
             let field = exportField.value[j];
@@ -447,17 +454,17 @@
             let l = 1;
             if (field.checked) {
               if (l < k) {
-                str += `"${memberList[i][key]}	",`;
+                str += `${memberList[i][key]},`;
               } else {
-                str += `"${memberList[i][key]}	"`;
+                str += `${memberList[i][key]}`;
               }
               l++;
             }
           }
           str += "\n";
         }
-        let uri = "data:text/xlsx;charset=utf-8,\uFEFF" + encodeURIComponent(str);
-        result.value = '<a href="' + uri + `" download="QQ群成员列表-${groupInfo.value.gn}.xlsx">已导出：点此下载</a>`;
+        let uri = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(str);
+        result.value = '<a href="' + uri + `" download="QQ群成员列表-${groupInfo.value.gn}.csv">已导出：点此下载</a>`;
         proxy.$message.success("已导出请下载！");
       };
       const getGenderText = (val) => {
@@ -504,8 +511,8 @@
             case "plain":
               exportGroupMemberListToPlain();
               break;
-            case "xlsx":
-              exportGroupMemberListToXlsx();
+            case "csv":
+              exportGroupMemberListToCsv();
               break;
           }
         }
@@ -756,7 +763,7 @@
       };
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-0ec73a95"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__scopeId", "data-v-8032fd7d"]]);
   const app = vue.createApp(App);
   for (const [key, component] of Object.entries(ElementPlusIconsVue__namespace)) {
     app.component(key, component);
