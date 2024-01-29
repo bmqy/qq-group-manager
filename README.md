@@ -44,7 +44,7 @@ QQ 群管理者，一键导出 QQ 群成员信息，需要先进入 QQ 群官网
 ![扩展运行效果图](https://raw.githubusercontent.com/bmqy/qq-group-manager/master/images/20181221125812.png)
 ![扩展运行效果图](https://raw.githubusercontent.com/bmqy/qq-group-manager/master/images/20181221125832.png)
 
-> 注：导出“\*.xlsx”参考：https://blog.csdn.net/hhzzcc_/article/details/80419396，感谢作者分享！
+> 注：导出“\*.csv”参考：https://blog.csdn.net/hhzzcc_/article/details/80419396，感谢作者分享！
 
 ### 联系作者
 
