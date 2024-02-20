@@ -33,7 +33,8 @@ export default defineConfig({
           ),
           'element-plus': cdn.jsdelivr('ElementPlus', 'dist/index.full.min.js'),
           '@element-plus/icons-vue': cdn.jsdelivr('ElementPlusIconsVue', 'dist/index.iife.min.js'),
-          'js-cookie': cdn.jsdelivr('Cookies', 'dist/js.cookie.min.js')
+          'js-cookie': cdn.jsdelivr('Cookies', 'dist/js.cookie.min.js'),
+          'xlsx': cdn.jsdelivr('XLSX', 'dist/xlsx.full.min.js'),
         },
         externalResource: {
           'element-plus/dist/index.css': cdn.jsdelivr(),

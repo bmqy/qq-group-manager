@@ -1,17 +1,17 @@
 {
   "name": "qq-group-manager",
   "private": true,
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "QQ群管理者，一键导出QQ群成员信息，需要先进入QQ群官网！",
-    "license": "ISC",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/bmqy/qq-group-manager.git"
-    },
-    "bugs": {
-        "url": "https://github.com/bmqy/qq-group-manager/issues"
-    },
-    "homepage": "https://github.com/bmqy/qq-group-manager#readme",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bmqy/qq-group-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bmqy/qq-group-manager/issues"
+  },
+  "homepage": "https://github.com/bmqy/qq-group-manager#readme",
   "author": "bmqy",
   "type": "module",
   "scripts": {
@@ -26,7 +26,8 @@
     "js-cookie": "^3.0.5",
     "sass": "^1.62.1",
     "sass-loader": "^13.3.0",
-    "vue": "^3.3.4"
+    "vue": "^3.3.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",

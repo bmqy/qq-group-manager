@@ -4,6 +4,7 @@ import 'element-plus/dist/index.css'
 import 'animate.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import Cookies from 'js-cookie'
+import * as XLSX from 'xlsx/xlsx.mjs';
 import App from './app.vue';
 
 const app = createApp(App);
@@ -12,6 +13,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 app.use(ElementPlus)
 app.config.globalProperties.$cookie = Cookies;
+app.config.globalProperties.$xlsx = XLSX;
 app.config.globalProperties.$app = {
     getName() {
         return GM_info['script']['name'];
